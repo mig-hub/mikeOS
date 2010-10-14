@@ -1,0 +1,1188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>The MikeOS BASIC App Developer Handbook</title>
+
+<style type="text/css">
+
+body {
+	font-family: sans-serif;
+}
+
+h1 {
+	margin-top:5px;
+	color: #DF6020;
+}
+
+h2 {
+	color: #DF6020;
+}
+
+h3 {
+	margin-top:5px;
+	color: #DF6020;
+}
+
+hr {
+	border: 0;
+	color: #DF6020;
+	background-color: #DF6020;
+	height: 3px;
+}
+
+pre {
+	background-color: #F0F0F0;
+	border: 5px solid #F0F0F0;
+}
+
+a {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:visited {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+li {
+	margin-left: -1ex;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<table border="0" cellpadding="10">
+<tr>
+
+
+
+<!-- NAVIGATION PANEL -->
+
+<td style="border:1px solid black; width:160px;" valign="top">
+
+<h3>Navigate</h3>
+
+<p><strong>Overview</strong></p>
+<ul>
+<li><a href="#features">Features</a></li>
+<li><a href="#example">Example</a></li>
+<li><a href="#assignment">Assignment</a></li>
+<li><a href="#memory">Memory</a></li>
+<li><a href="#theeditor">The editor</a></li>
+</ul>
+
+<p><strong>Instructions</strong></p>
+<ul>
+<li><a href="#alert">ALERT</a></li>
+<li><a href="#call">CALL</a></li>
+<li><a href="#cls">CLS</a></li>
+<li><a href="#cursor">CURSOR</a></li>
+<li><a href="#curschar">CURSCHAR</a></li>
+<li><a href="#end">END</a></li>
+<li><a href="#for">FOR</a></li>
+<li><a href="#getkey">GETKEY</a></li>
+<li><a href="#gosub">GOSUB</a></li>
+<li><a href="#goto">GOTO</a></li>
+<li><a href="#if">IF</a></li>
+<li><a href="#input">INPUT</a></li>
+<li><a href="#load">LOAD</a></li>
+<li><a href="#move">MOVE</a></li>
+<li><a href="#next">NEXT</a></li>
+<li><a href="#pause">PAUSE</a></li>
+<li><a href="#peek">PEEK</a></li>
+<li><a href="#poke">POKE</a></li>
+<li><a href="#port">PORT</a></li>
+<li><a href="#print">PRINT</a></li>
+<li><a href="#rand">RAND</a></li>
+<li><a href="#rem">REM</a></li>
+<li><a href="#return">RETURN</a></li>
+<li><a href="#save">SAVE</a></li>
+<li><a href="#serial">SERIAL</a></li>
+<li><a href="#sound">SOUND</a></li>
+<li><a href="#waitkey">WAITKEY</a></li>
+</ul>
+
+<p><strong>Samples</strong></p>
+<ul>
+<li><a href="#hexdumper">Hex dumper</a></li>
+<li><a href="#miketron">MikeTron</a></li>
+<li><a href="#fileuppercaser">File uppercaser</a></li>
+</ul>
+
+<p><strong>Extra</strong></p>
+<ul>
+<li><a href="#help">Help</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+
+</td>
+
+
+
+
+
+<!-- MAIN CONTENT PANEL -->
+
+<td valign="top">
+
+<h1>The MikeOS BASIC App Developer Handbook</h1>
+
+<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+
+<p>This documentation file explains how to write software for MikeOS using the BASIC interpreter
+built into the operating system. If you have any questions, see <a href="http://mikeos.berlios.de">the MikeOS website</a>
+for contact details and mailing list information.</p>
+
+<p>Click the links on the left to navigate around this guide.</p>
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Overview</h2>
+
+<a name="features"></a>
+<h3>Features</h3>
+
+<p>The MikeOS BASIC interpreter runs a simple dialect of the BASIC programming language. There
+are commands for taking input, handling the screen, performing nested loops, loading/saving files,
+and so forth. You will find a full list of the included instructions later in this document. Here
+are the essentials you need to know.</p>
+
+<ul>
+<li><strong>Numeric variables</strong> -- These are <strong>A</strong> to <strong>Z</strong>, each storing
+one positive integer word (ie 0 to 65535). The <strong>R</strong> and <strong>S</strong> variables have
+special roles with <strong>LOAD</strong> and <strong>SAVE</strong> commands, as explained in the instruction
+list below.</li>
+<li><strong>String variables</strong> -- These are <strong>$1</strong> to <strong>$8</strong>, each 128 bytes
+long.</li>
+<li><strong>Arrays</strong> -- You can use string variables as arrays via the <strong>PEEK</strong> and <strong>POKE</strong> commands.
+For instance, <strong>X = &amp; $1</strong> places the memory location of the $1 string variable into X. You can then put data into it with eg <strong>POKE 77 X</strong> (put 77 into the memory location pointed to by X).</li>
+<li><strong>Labels</strong> -- Such as <strong>box_loop:</strong> etc. Used by <strong>GOTO</strong> and <strong>GOSUB</strong>, they must have a trailing colon and be at the start of a line.</li>
+<li><strong>Ending</strong> -- Programs must finish with an <strong>END</strong> statement.</li>
+</ul>
+
+<p><strong>GOSUB</strong> calls can be nested up to ten times. <strong>FOR</strong> loops can be nested using different variables (eg you
+can have a <strong>FOR X = 1 TO 10 ... NEXT X</strong> loop surrounding a <strong>FOR Y = 30 TO 50</strong> loop). You can enter code in uppercase or lowercase -- the interpreter doesn't mind either way. However, labels are case-sensitive.</p>
+
+
+
+<br />
+
+
+<a name="example"></a>
+<h3>Example</h3>
+
+<p>Here's a small example program demonstrating various common features:</p>
+
+<pre>rem *** MikeOS BASIC example program ***
+
+alert "Welcome to the example!"
+cls
+
+print "Let's skip the next 'print' line..."
+goto jump
+
+print "This line will never be printed :-("
+
+jump:
+print "Righto, now enter a number:"
+input x
+
+if x &gt; 10 then print "X is bigger than 10! Wow!"
+if x &lt; 10 then print "X is quite small actually."
+if x = 10 then gosub equalsroutine
+
+a = 7
+b = a / 2
+print "Variable A is seven here. Divided by two you get:"
+print b
+print "And the remainder of that is:"
+b = a % 2
+print b
+
+print "A quick loop here..."
+for c = 1 to 10
+  print c
+next c
+
+print "Righto, that's the end! Bye!"
+end
+
+equalsroutine:
+  print "Awesome, a perfect 10! Give me your name so I can high-five you!"
+  input $1
+  print "Top work, " ;
+  print $1
+return
+</pre>
+
+
+<p>This example should be mostly self-explanatory. You can see that the subroutine is indented with spaces,
+but that's not necessary if you don't want it. You can follow <strong>IF ... THEN</strong> with any other
+instruction. Regarding this part:</p>
+
+<pre>
+  print "Top work, " ;
+  print $1
+</pre>
+
+<p>The space and semi-colon character (;) after the quoted string tells the interpreter not to print a newline
+after the string. So here, we print the user's name on the same line. You can do this with numerical variables
+as well, eg <strong>PRINT X ;</strong> etc.</p>
+
+<p>See the Samples section at the end for more demonstration programs.</p>
+
+
+
+<br />
+
+
+<a name="assignment"></a>
+<h3>Assignment</h3>
+
+
+<p>The following are valid ways to assign numeric variables in MikeOS BASIC:</p>
+
+<pre>
+a = 10
+a = b
+a = b + 10
+a = b + c
+a = b - 10
+a = b - c
+a = b * 10
+a = b * c
+a = b / 10
+a = b / c
+a = b % 10
+a = b % c
+</pre>
+
+<p>So you can use combinations of numbers and variables. Note that you can perform multiple
+operations in the same line:</p>
+
+<pre>a = b + c * 2 / 3</pre>
+
+<p>But note that there is no operator precedence; the calculation is simply worked out one step
+at a time from left to right. For string variables:</p>
+
+<pre>
+$1 = "Hello"
+$1 = $2
+</pre>
+
+<p>You can get the location of a string variable to use as an array:</p>
+
+<pre>
+x = &amp; $3
+</pre>
+
+<p>You can get variables from the user with <strong>INPUT</strong> like this:</p>
+
+<pre>
+input x
+input $1
+</pre>
+
+
+
+<br />
+
+
+<a name="memory"></a>
+<h3>Memory</h3>
+
+<p>MikeOS and its programs exist in a single 64K memory segment. The first
+32K is occupied by the kernel and disk cache. Your BASIC program may be loaded at the start of the second 32K,
+ie 32768, if it is run directly from the program menu or CLI. However, if it is run from a standalone program
+such as the EDIT.BIN editor, its starting point will be elsewhere. Use <strong>PROGSTART</strong> and
+<strong>RAMSTART</strong> to find out what memory you can use:</p>
+
+<pre>
+x = PROGSTART
+</pre>
+
+<p>This assigns to the X variable the location at which the BASIC program was loaded. In other words, this is where
+the execution of the BASIC program by the interpreter starts. We also have:</p>
+
+<pre>
+x = RAMSTART
+</pre>
+
+<p>This is one byte on from the end of the BASIC code. Therefore this is empty memory which you can use, up until the 65536 mark.
+You can LOAD and SAVE files in here, PEEK and POKE around, and do what you want without it impacting the operating system or BASIC program.</p>
+
+
+
+
+<br />
+
+
+<a name="theeditor"></a>
+<h3>The editor</h3>
+
+<p>You can run your .BAS programs by selecting them from the program menu or typing them into the
+command line interface -- eg entering <strong>example</strong> will run <strong>EXAMPLE.BAS</strong>.
+Use the MikeOS file manager, <strong>FILEMAN.BIN</strong>, to make backup copies of your work and
+delete old files.</p>
+
+<p>MikeOS includes a text editor, <strong>EDIT.BIN</strong> Which you can use to edit your BASIC programs.
+It lets you run your code straight from inside the editor by pressing the <strong>F8</strong> key. Note
+that if your program has an infinite loop or major bug, it may hang execution -- so it's worth hitting
+<strong>F2</strong> before running your code to save it to the disk. Hit <strong>F5</strong> to delete whole
+lines quickly, and <strong>Esc</strong> to exit (you'll see a reminder of these keybindings in the bottom
+bar of the editor).</p>
+
+<p>The MikeOS text editor only handles Unix-style text files, and curently does not support horizontal scrolling
+of lines, so keep them less than 80 chars! You can use the Delete and Backspace keys to erase characters,
+but note that only Delete can be used to remove newlines.</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+
+<h2>Instructions</h2>
+
+<a name="instructions"></a>
+
+
+<a name="alert"></a>
+<h3>ALERT</h3>
+<p>Show a dialog box on the screen with a string, and an OK button triggered by the Enter key. Example:</p>
+
+<pre>
+alert "File saved correctly."
+</pre>
+
+
+
+<br />
+
+<a name="call"></a>
+<h3>CALL</h3>
+<p>Moves machine code execution to the specified point in RAM (using the x86 <strong>call</strong> instruction). The code
+must be terminated with a <strong>ret</strong> (C3 hex, 195 decimal) instruction. In this example, we simply
+add a <strong>ret</strong> instruction into RAM location 40000 and call it, which returns control straight back to the BASIC
+interpreter:</p>
+<a name="theeditor"></a>
+
+<pre>
+poke 195 40000
+call 40000
+</pre>
+
+
+
+<br />
+
+<a name="cls"></a>
+<h3>CLS</h3>
+<p>Clears the screen and returns the cursor to the top-left corner of the screen. Example:</p>
+
+<pre>
+cls
+</pre>
+
+
+
+
+<br />
+
+<a name="cursor"></a>
+<h3>CURSOR</h3>
+<p>Determines whether to show the text cursor or not. Example:</p>
+
+<pre>
+cursor off
+print "The cursor is off for five seconds!"
+pause 50
+cursor on
+print "And now it's back on."
+</pre>
+
+
+
+
+<br />
+
+<a name="curschar"></a>
+<h3>CURSCHAR</h3>
+<p>Stores the character underneath the cursor location into the specified variable. Example:</p>
+
+<pre>
+move 0 0
+print "Hello world"
+
+move 0 0
+curschar x
+
+rem *** The next command will print 'H' ***
+print chr x
+
+move 1 0
+curschar x
+
+rem *** The next command will print 'e' ***
+print chr x
+</pre>
+
+
+
+
+<br />
+
+<a name="end"></a>
+<h3>END</h3>
+<p>Terminates execution of the BASIC program and hands control back to the operating system. Example:</p>
+
+<pre>
+end
+</pre>
+
+
+
+
+<br />
+
+<a name="for"></a>
+<h3>FOR</h3>
+<p>Begins a loop, counting upwards using a variable. The loop must be finished with a NEXT instruction
+and the relevant variable. Example:</p>
+
+<pre>
+for x = 1 to 10
+  print "In a loop! X is " ;
+  print x
+next x
+</pre>
+
+
+
+
+<br />
+
+<a name="getkey"></a>
+<h3>GETKEY</h3>
+<p>Checks the keyboard buffer for a key, and if one has been pressed, places it into the
+specified variable.</p>
+
+<pre>
+loop:
+  print "Infinite loop until m or Esc is pressed..." ;
+  getkey x
+  if x = 'm' then goto done
+  goto loop
+
+done:
+  print "Finished loop!"
+</pre>
+
+
+
+
+<br />
+
+<a name="gosub"></a>
+<h3>GOSUB</h3>
+<p>Takes a label. It executes a subroutine, which must be finished with a RETURN instruction. You can
+nest GOSUB routines up to 10 times. Example:</p>
+
+<pre>
+print "About to go into a subroutine..."
+gosub mylabel
+print "Subroutine done!"
+end
+
+mylabel:
+  print "Inside a GOSUB here!"
+return
+</pre>
+
+
+
+
+<br />
+
+<a name="goto"></a>
+<h3>GOTO</h3>
+<p>Takes a label, and jumps to that label in the code. Example:</p>
+
+<pre>
+print "Going to miss the next 'PRINT' line of code..."
+goto skippy
+
+print "This'll never be printed."
+
+skippy:
+print "And now we're back home"
+</pre>
+
+
+
+
+<br />
+
+<a name="if"></a>
+<h3>IF</h3>
+<p>Executes a command depending on a condition. After stating the condition (eg whether one number
+is bigger than another, or whether two strings match) you must use THEN and follow with another
+instruction. Examples:</p>
+
+<pre>
+if x = 10 then print "X is 10! Woohoo"
+</pre>
+
+<pre>
+if x = y then print "X is the same as Y"
+</pre>
+
+<pre>
+if x = 'm' then print "X contains the letter m"
+</pre>
+
+<pre>
+if x &lt; y then print "Now X is less than Y"
+</pre>
+
+<pre>
+if x &gt; y then goto xbiggerthany
+</pre>
+
+<pre>
+if $1 = "quit" then end
+</pre>
+
+<pre>
+if $1 = $2 then gosub stringsmatch
+</pre>
+
+
+
+
+<br />
+
+<a name="input"></a>
+<h3>INPUT</h3>
+<p>Gets input from the user and stores the result into a numeric or string variable. Examples:</p>
+
+<pre>
+input x
+input $1
+</pre>
+
+
+
+
+<br />
+
+<a name="load"></a>
+<h3>LOAD</h3>
+<p>Loads the specified file into RAM at the specified point. The first argument is the filename,
+and the second the location into which it should be loaded. If the file cannot be found or loaded,
+the R variable contains 1 after the instruction; otherwise it contains 0 and the S variable
+contains the file size. Examples:</p>
+
+<pre>
+load "example.txt" 40000
+if r = 1 then goto fail
+print "File size is:"
+print s
+end
+
+fail:
+print "File couldn't be loaded"
+end
+</pre>
+
+<pre>
+$1 = "example.txt"
+x = 40000
+
+load $1 x
+if r = 1 then goto fail
+print "File size is:"
+print s
+end
+
+fail:
+print "File couldn't be loaded"
+end
+</pre>
+
+
+
+
+<br />
+
+<a name="move"></a>
+<h3>MOVE</h3>
+<p>Moves the cursor position on the screen. Examples:</p>
+
+<pre>
+move 20 15
+</pre>
+
+<pre>
+x = 20
+y = 15
+move x y
+</pre>
+
+
+
+
+<br />
+
+<a name="next"></a>
+<h3>NEXT</h3>
+<p>Continues the FOR loop specified previously, and must be followed by a variable. See FOR above. Example:</p>
+
+<pre>
+next x
+</pre>
+
+
+
+
+<br />
+
+<a name="pause"></a>
+<h3>PAUSE</h3>
+<p>Delays execution of the program by the specified 10ths of a second. This ultimately results in a BIOS
+call and may be slower or faster in some PC emulators. Try it on real hardware to be sure. Example:</p>
+
+<pre>
+print "Now let's wait for three seconds..."
+pause 30
+
+print "Hey, and one more, this time with a variable..."
+x = 10
+pause x
+</pre>
+
+
+
+
+<br />
+
+<a name="peek"></a>
+<h3>PEEK</h3>
+<p>Retrieve the byte stored in the specifed location in RAM. Examples:</p>
+
+<pre>
+peek a 40000
+print "The number stored in memory location 40000 is..."
+print a
+</pre>
+
+<pre>
+x = 32768
+peek a x
+</pre>
+
+
+
+
+<br />
+
+<a name="poke"></a>
+<h3>POKE</h3>
+<p>Insert the byte (0 to 255) value into the specified location in RAM. Example:</p>
+
+<pre>
+print "Putting the number 126 into location 40000 in memory..."
+poke 126 40000
+
+print "Now doing the same, but using variables..."
+x = 126
+y = 40000
+poke x y
+</pre>
+
+
+
+
+
+<br />
+
+<a name="port"></a>
+<h3>PORT</h3>
+<p>Sends and receives bytes from the specified port. Examples:</p>
+
+<pre>
+x = 1
+port out 1234 x
+port out 1234 15
+port in 1234 x
+</pre>
+
+
+
+
+
+<br />
+
+<a name="print"></a>
+<h3>PRINT</h3>
+<p>Displays text or the contents of a variable onto the screen. This will also move the cursor onto a
+new line after printing, unless the command is followed by a space and semi-colon. Example:</p>
+
+<pre>
+print "Hello, world!"
+
+$1 = "Some text"
+print $1
+
+x = 123
+print x
+
+$2 = "Mike"
+print "No newlines here, " ;
+print $2
+</pre>
+
+<p>Note that for numerical variables, the PRINT command also supports two extra keywords:</p>
+
+<pre>
+x = 109
+print x
+print chr x
+print hex x
+</pre>
+
+<p>In the first print command, the output is 109. In the second, the output is the ASCII character
+for 109 -- that is, 'm'. And in the third command, it shows the hexadecimal equivalent of 109.</p>
+
+
+
+
+<br />
+
+<a name="rand"></a>
+<h3>RAND</h3>
+<p>Generate a random integer number between two values (inclusive) and store it
+in a variable. Example:</p>
+
+<pre>
+rem *** Make X a random number between 50 and 2000 ***
+
+rand x 50 2000
+</pre>
+
+
+
+
+
+<br />
+
+<a name="rem"></a>
+<h3>REM</h3>
+<p>A remark -- ie a comment that the BASIC interpreter ignores. Example:</p>
+
+<pre>
+rem *** This routine calculates the cuteness of kittens ***
+</pre>
+
+
+
+
+
+<br />
+
+<a name="return"></a>
+<h3>RETURN</h3>
+<p>Switches execution back to the position of the prior GOSUB statement. See GOSUB above for
+more information. Example:</p>
+
+<pre>
+return
+</pre>
+
+
+
+
+
+<br />
+
+<a name="save"></a>
+<h3>SAVE</h3>
+<p>Saves data from memory to a file on the disk. The first parameter is the filename, the second
+the location in RAM where the data starts, and the third the number (in bytes) the amount of data to save. After
+execution, the R variable contains 1 if the file save operation failed (eg if the file already exists or it's
+a write-only medium), or 0 if it was successful. Examples:</p>
+
+<pre>
+save "myfile.txt" 40000 256
+</pre>
+
+<pre>
+$1 = "myfile.txt"
+x = 40000
+y = 256
+save $1 x y
+</pre>
+
+
+
+
+<br />
+
+<a name="serial"></a>
+<h3>SERIAL</h3>
+<p>Turns on serial port 1, sends a byte, or receives a byte depending on the following command. There
+are two modes: 1200 baud and 9600 baud. Examples:</p>
+
+<pre>
+print "Enabling the serial port at 1200 baud..."
+serial on 1200
+</pre>
+
+<pre>
+print "Enabling the serial port at 9600 baud..."
+serial on 9600
+</pre>
+
+<pre>
+print "Sending the number 20 to the serial port, then 50..."
+x = 20
+serial send x
+serial send 50
+</pre>
+
+<pre>
+print "Receiving a byte from the serial port..."
+serial rec x
+</pre>
+
+
+
+<br />
+
+<a name="sound"></a>
+<h3>SOUND</h3>
+<p>Generate a note from the PC speaker at the specified frequency, for the specified length of time
+in 10ths of a second. Example:</p>
+
+<pre>
+print "Playing a low-middle-ish C for two seconds..."
+sound 4000 20
+</pre>
+
+<p><strong>Note:</strong> some quick frequencies. 4000 = C. 3600 = D. 3200 = E. 3000 = F. 2700 = G. 2400 = A. 2100 = B.</p>
+
+
+
+<br />
+
+
+
+
+<a name="waitkey"></a>
+<h3>WAITKEY</h3>
+<p>Pauses program execution, awaiting a keypress, and stores the key in the specified
+variable. Note some special values: 1 for the Up cursor key; 2 for Down; 3 for Left;
+4 for Right; 13 for Enter; 27 for Esc.</p>
+
+<pre>
+waitkey x
+if x = 'm' then print "m was pressed"
+if x = 4 then print "You hit the Right cursor key"
+</pre>
+
+
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+<h2>Samples</h2>
+
+<a name="hexdumper"></a>
+<h3>Hex dumper</h3>
+
+<p>Asks for a filename, loads the file data into the start of empty RAM, then loops over it, printing the value
+of each byte in hexadecimal format. Note that the <strong>S</strong> variable is filled with the file size
+after the <strong>LOAD</strong> instruction, so we use it as a counter (counting down) to find out when
+we've finished the file.</p>
+
+<pre>
+rem *** Hex dumper ***
+
+print "Enter a filename:"
+input $1
+
+x = RAMSTART
+
+load $1 x
+if r = 1 then goto error
+
+loop:
+  peek a x
+  print hex a ;
+  print "  " ;
+  x = x + 1
+  s = s - 1
+  if s = 0 then goto finish
+  goto loop
+
+finish:
+print ""
+end
+
+error:
+print "Could not load file!"
+end
+</pre>
+
+<br />
+
+
+
+<a name="miketron"></a>
+<h3>MikeTron</h3>
+
+<p>A one-player version of the classic Tron game -- see the game help text below...</p>
+
+<pre>
+rem *** MikeTron ***
+
+cls
+
+print "You control a vehicle leaving a trail behind it."
+print ""
+print "It is always moving, and if it crosses any part"
+print "of the trail or border (+ characters), the game"
+print "is over. Use the Q and A keys to change the direction"
+print "to up and down, and O and P for left and right."
+print "See how long you can survive! Score at the end."
+print ""
+print "NOTE: May run at incorrect speed in emulators!"
+print ""
+print "Hit a key to begin..."
+
+waitkey x
+
+
+cls
+cursor off
+
+
+rem *** Draw border around screen ***
+
+gosub setupscreen
+
+
+rem *** Start in the middle of the screen ***
+
+x = 40
+y = 12
+
+move x y
+
+
+rem *** Movement directions: 1 - 4 = up, down, left, right ***
+rem *** We start the game moving right ***
+
+d = 4
+
+
+rem *** S = score variable ***
+
+s = 0
+
+
+mainloop:
+  print "+" ;
+
+  pause 1
+
+  getkey k
+
+  if k = 'q' then d = 1
+  if k = 'a' then d = 2
+  if k = 'o' then d = 3
+  if k = 'p' then d = 4
+
+  if d = 1 then y = y - 1
+  if d = 2 then y = y + 1
+  if d = 3 then x = x - 1
+  if d = 4 then x = x + 1
+
+  move x y
+
+  curschar c
+  if c = '+' then goto finish
+
+  s = s + 1
+  goto mainloop
+
+
+finish:
+cursor on
+cls
+
+print "Your score was: " ;
+print s
+print "Press Esc to finish"
+
+escloop:
+  waitkey x
+  if x = 27 then end
+  goto escloop
+
+
+setupscreen:
+  move 0 0
+  for x = 0 to 78
+    print "+" ;
+  next x
+
+  move 0 24
+  for x = 0 to 78
+    print "+" ;
+  next x
+
+  move 0 0
+  for y = 0 to 24
+    move 0 y
+    print "+" ;
+  next y
+
+  move 78 0
+  for y = 0 to 24
+    move 78 y
+    print "+" ;
+  next y
+
+  return
+</pre>
+
+
+<br />
+
+
+
+<a name="fileuppercaser"></a>
+<h3>File uppercaser</h3>
+
+<p>Asks for a filename, loads the file data, converts all the lowercase characters to uppercase,
+asks for a new filename, and saves the changed data to that new file. Note that the <strong>S</strong>
+variable is filled with the file size after the <strong>LOAD</strong> instruction; we save that until
+the <strong>SAVE</strong> operation later so that we save the correct number of bytes. However, we make
+a copy of it into the <strong>C</strong> variable to use as a counter as we move through the file.</p>
+
+<pre>
+rem *** Text file uppercaser ***
+
+print "Enter a filename:"
+input $1
+
+x = RAMSTART
+
+load $1 x
+if r = 1 then goto error
+
+c = s
+
+loop:
+  peek a x
+
+  if a &lt; 97 then goto skip
+  if a &gt; 122 then goto skip
+
+  a = a - 32
+  poke a x
+
+skip:
+  x = x + 1
+  c = c - 1
+
+  if c = 0 then goto finish
+  goto loop
+
+
+finish:
+print "Enter filename to save to:"
+input $2
+
+x = RAMSTART
+
+save $2 x s
+if r = 1 then goto error
+print "File uppercased and saved!"
+end
+
+error:
+print "File error!"
+end
+</pre>
+
+
+
+
+<br />
+
+<hr noshade="noshade" />
+
+
+<h2>Extra</h2>
+
+<a name="help"></a>
+<h3>Help</h3>
+
+
+<p>If you have any questions about MikeOS, or you're developing a similar OS and want
+to share code and ideas, go to <a href="http://mikeos.berlios.de">the MikeOS website</a>
+and join the mailing list as described. You can then email
+<a href="mailto:mikeos-developer@lists.berlios.de">mikeos-developer@lists.berlios.de</a>
+to post to the list.</p>
+
+
+
+<br />
+
+
+<a name="license"></a>
+<h3>License</h3>
+
+<p>MikeOS is open source and released under a BSD-like license (see <strong>doc/LICENSE.TXT</strong>
+in the MikeOS <strong>.zip</strong> file). Essentially, it means you can do anything you like with the
+code, including basing your own project on it, providing you retain the license file and give credit
+to the MikeOS developers for their work.</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+

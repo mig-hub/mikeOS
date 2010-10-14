@@ -1,0 +1,34 @@
+==================================================================
+MikeOS -- Open source 16-bit operating system for x86 PCs
+Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+==================================================================
+
+
+PROJECT ADMIN (MAIN CODE AND HANDBOOKS)
+
+ * Mike Saunders -- okachi@gmail.com
+
+
+DEVELOPMENT
+
+ * E Dehling
+ * Ian Seyler
+ * Michael van Tellingen
+ * Peter Nemeth
+ * Paulo Valongo
+ * Takayoshi Sasano
+ * Tomasz Gorol
+ * Tslil Clingman
+ * Walt Nagel
+ * Yutaka Saiko
+
+
+WEBSITE, DOCS AND ARTWORK
+
+ * Nitin Reddy Katkam -- logo and site design
+ * Paul Sommers -- Handbook API reference
+ * Helen Ewart -- MikeOS cat mascot
+
+
+==================================================================
+

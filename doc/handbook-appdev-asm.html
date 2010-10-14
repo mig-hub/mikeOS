@@ -1,0 +1,1741 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>The MikeOS Assembly App Developer Handbook</title>
+
+<style type="text/css">
+
+body {
+	font-family: sans-serif;
+}
+
+h1 {
+	margin-top:5px;
+	color: #DF6020;
+}
+
+h2 {
+	color: #DF6020;
+}
+
+h3 {
+	margin-top:5px;
+	color: #DF6020;
+}
+
+hr {
+	border: 0;
+	color: #DF6020;
+	background-color: #DF6020;
+	height: 3px;
+}
+
+pre {
+	background-color: #F0F0F0;
+	border: 5px solid #F0F0F0;
+}
+
+a {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:visited {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+li {
+	margin-left: -1ex;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<table border="0" cellpadding="10">
+<tr>
+
+
+
+<!-- NAVIGATION PANEL -->
+
+<td style="border:1px solid black; width:160px;" valign="top">
+
+<h3>Navigate</h3>
+
+<p><strong>Overview</strong></p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#toolsneeded">Tools needed</a></li>
+</ul>
+
+<p><strong>Example</strong></p>
+<ul>
+<li><a href="#sourcecode">Source code</a></li>
+<li><a href="#building">Building</a></li>
+<li><a href="#explanation">Explanation</a></li>
+</ul>
+
+<p><strong>System calls</strong></p>
+<ul>
+<li><a href="#syscallintro">Introduction</a></li>
+<li><a href="#syscalldisk">Disk</a></li>
+<li><a href="#syscallkeyboard">Keyboard</a></li>
+<li><a href="#syscallmath">Math</a></li>
+<li><a href="#syscallmisc">Misc</a></li>
+<li><a href="#syscallports">Ports</a></li>
+<li><a href="#syscallscreen">Screen</a></li>
+<li><a href="#syscallstring">String</a></li>
+<li><a href="#syscallsound">Sound</a></li>
+<li><a href="#syscallbasic">BASIC</a></li>
+</ul>
+
+<p><strong>Extra</strong></p>
+<ul>
+<li><a href="#help">Help</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+
+</td>
+
+
+
+
+
+<!-- MAIN CONTENT PANEL -->
+
+<td valign="top">
+
+<h1>The MikeOS Assembly App Developer Handbook</h1>
+
+<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+
+<p>This documentation file explains how write software for MikeOS in assembly language. It shows you the tools you need,
+how MikeOS programs work, and how to use the system calls included in the kernel. If you have
+any questions, see <a href="http://mikeos.berlios.de">the MikeOS website</a> for contact details
+and mailing list information.</p>
+
+<p>Click the links on the left to navigate around this guide.</p>
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Overview</h2>
+
+<a name="introduction"></a>
+<h3>Introduction</h3>
+
+<p>Many MikeOS programs are written in 16-bit, real mode assembly language. (The OS
+also includes a BASIC interpreter.) Because MikeOS and its programs live in a single 64K
+memory segment, you do not need to concern yourself with segment registers.</p>
+
+<p>MikeOS programs are loaded at the <strong>32K point</strong> (32768) in the segment, and have a
+maximum size of 32K. Consequently, your programs will need to begin with these directives:</p>
+
+<pre>
+BITS 16
+ORG 32768
+</pre>
+
+<p>There are many system calls available in MikeOS for controlling the screen, getting input, manipulating
+strings, loading/saving files, and more. All parameters to MikeOS system calls are passed in registers,
+and not on the stack. To use them in your programs, you need this line:</p>
+
+<pre>
+%INCLUDE "mikedev.inc"
+</pre>
+
+<p>This doesn't include any code, but a list of <strong>equ</strong> directives that point to system call vectors
+in the kernel. So, by including this file you can call, for instance, the MikeOS <strong>os_print_string</strong>
+routine without having to know exactly where it is in the kernel. <strong>mikedev.inc</strong> is included in
+the <strong>programs/</strong> directory of the MikeOS download -- it also provides a quick reference to the
+system calls.</p>
+
+
+<br />
+
+
+<a name="toolsneeded"></a>
+<h3>Tools needed</h3>
+
+<p>To write MikeOS programs you need:</p>
+
+<ul>
+<li><strong>NASM</strong> -- A powerful, free and open source assembler</li>
+<li><strong>mikedev.inc</strong> -- The system call vectors described above</li>
+<li>A way to add programs to the floppy disk</li>
+</ul>
+
+<p>Let's clarify this: MikeOS uses NASM for its programs and kernel source code, hence why we recommend it
+here. You can, of course, use any other assembler that can output plain binary files (ie with no header)
+and accept 16-bit code. NASM is available in most Linux distro repositories, or you can download the Windows
+version <a href="http://www.nasm.us/pub/nasm/releasebuilds/">from here</a> (get the 'win32' file).</p>
+
+<p>For the second point, copy <strong>programs/mikedev.inc</strong> so that it's alongside your program's
+source code for inclusion.</p>
+
+<p>For the third point, if you've written MikeOS to a real floppy disk, you can just copy your <strong>.BIN</strong>
+programs onto that disk (root directory only!), boot MikeOS and test them out. If you're working with the virtual
+<strong>mikeos.flp</strong> disk image, see the <em>Copying files</em> section of the User Handbook.</p>
+
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Example</h2>
+
+<a name="sourcecode"></a>
+<h3>Source code</h3>
+
+<p>Here is an example MikeOS program, in NASM format, which prints a string to the screen
+and waits for the user to press a key before finishing:</p>
+
+<pre>
+	BITS 16
+	ORG 32768
+	%INCLUDE 'mikedev.inc'
+
+start:
+	mov si, mystring
+	call os_print_string
+
+	call os_wait_for_key
+
+	ret
+
+	mystring db 'My first MikeOS program!', 0
+</pre>
+
+
+<br />
+
+
+<a name="building"></a>
+<h3>Building</h3>
+
+<p>Save the above code as <strong>testapp.asm</strong>, and enter this command to assemble it
+(works on both Linux and Windows):</p>
+
+<pre>
+nasm -f bin -o testapp.bin testapp.asm
+</pre>
+
+<p>Using the '-f bin' option we tell NASM that we just want a plain binary file: no header or sections.
+The resulting executable file is <strong>testapp.bin</strong> that we can copy to our floppy disk or add
+to the virtual disk image as described in <em>Copying files</em> in the User Handbook. Then we can boot
+MikeOS and run the program.</p>
+
+
+<br />
+
+
+<a name="explanation"></a>
+<h3>Explanation</h3>
+
+
+<p>This is a very short program, but we'll explain exactly how it works for complete clarity. The first
+three lines will not be assembled to machine code instructions, but are just directives to tell NASM that
+we want to operate in 16 bit mode, our code is written to be executed from the 32K mark, and we want to
+use system calls from the MikeOS API.</p>
+
+<p>Next we have the 'start:' label, which is not essential but good practice to make things clear. We put
+the location of a zero-terminated string into the <strong>SI</strong> register, then call the MikeOS
+<strong>os_print_string</strong> routine which we can access via the vectors listed in <strong>mikedev.inc</strong>.
+After that we pause program until a the user presses a key.</p>
+
+<p>All MikeOS programs must end with a <strong>ret</strong> instruction, which passes control back to the OS.
+After that instruction we have the data for our string. And that's it!</p>
+
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>System calls</h2>
+
+<a name="syscallintro"></a>
+<h3>Introduction</h3>
+
+<p>The MikeOS kernel includes system calls for outputting to the screen, taking keyboard input,
+manipulating strings, producing PC speaker sounds, math operations and disk I/O. You can get
+a quick reference to the registers that these calls take and pass back by looking at <strong>mikedev.inc</strong>,
+and see practical use of the calls in the <strong>programs/</strong> directory.</p>
+
+<p>Here we have a detailed API explanation with examples. You can see the full source code behind these system
+calls in the <strong>source/features/</strong> directory in MikeOS. Each aspect of the API below is contained
+within an assembly source file, so you can enhance the system calls as per the MikeOS System Developer Handbook.</p>
+
+
+
+<br />
+
+
+<hr style="width:50%;" />
+
+
+<a name="syscalldisk"></a>
+<h2>Disk</h2>
+
+
+
+<h3>os_get_file_list</h3>
+<p><strong>Generate comma-separated string of files on floppy</strong></p>
+
+<ul>
+ <li>IN/OUT: AX = location to store zero-terminated filename string</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .filestring
+	call os_get_file_list
+
+	; Now .filestring will contain something like
+	; 'HELLO.BIN,FOO.BAR,THREE.TXT', 0
+
+	.filestring	times 256 db 0
+</pre>
+
+
+<br />
+
+
+
+
+<h3>os_load_file</h3>
+<p><strong>Load file into RAM</strong></p>
+
+<ul>
+ <li>IN: AX = location of filename, CX = location in RAM to load file</li>
+ <li>OUT: BX = file size (in bytes), carry set if file not found</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, filename
+	mov cx, 36960		; 4K after where external program loads
+	call os_load_file
+
+	...
+
+	filename db 'README.TXT'
+</pre>
+
+<br />
+
+
+<h3>os_write_file</h3>
+<p><strong>Save (max 64K) file to disk</strong></p>
+
+<ul>
+ <li>IN: AX = filename, BX = data location, CX = bytes to write</li>
+ <li>OUT: Carry clear if OK, set if failure</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	; For this example, there's some text stored in .data
+
+	mov ax, .filename
+	mov bx, .data
+	mov cx, 4192
+	call os_write_file
+
+	.filename	db 'HELLO.TXT', 0
+	.data		times 4192 db 0
+</pre>
+
+<br />
+
+
+
+<h3>os_file_exists</h3>
+<p><strong>Check for presence of file on the floppy</strong></p>
+
+<ul>
+ <li>IN: AX = filename location</li>
+ <li>OUT: carry clear if found, set if not</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .filename
+	call os_file_exists
+	jc .not_found
+
+	...
+
+.not_found:
+	; Print error message here
+
+	.filename	db 'HELLO.TXT', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_create_file</h3>
+<p><strong>Creates a new 0-byte file on the floppy disk</strong></p>
+
+<ul>
+ <li>IN: AX = location of filename</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .filename
+	call os_create_file
+
+	...
+
+	.filename	db 'HELLO.TXT', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_remove_file</h3>
+<p><strong>Deletes the specified file from the filesystem</strong></p>
+
+<ul>
+ <li>IN: AX = location of filename to remove</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+
+
+<br />
+
+
+
+<h3>os_rename_file</h3>
+<p><strong>Change the name of a file on the disk</strong></p>
+
+<ul>
+ <li>IN: AX = filename to change, BX = new filename (zero-terminated strings)</li>
+ <li>OUT: carry set on error</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .filename1
+	mov bx, .filename2
+	call os_rename_file
+
+	jc .error
+
+	...
+
+.error:
+	; File couldn't be renamed (may already exist)
+
+	.filename1	db 'ORIG.TXT', 0
+	.filename2	db 'NEW.TXT', 0
+</pre>
+
+<br />
+
+
+
+<h3>os_get_file_size</h3>
+<p><strong>Get file size information for specified file</strong></p>
+
+<ul>
+ <li>IN: AX = filename</li>
+ <li>OUT: BX = file size in bytes (up to 64K) or carry set if file not found</li>
+</ul>
+
+
+
+<br />
+
+
+
+<hr style="width:50%;" />
+
+
+<a name="syscallkeyboard"></a>
+<h2>Keyboard</h2>
+
+<h3>os_wait_for_key</h3>
+<p><strong>Waits for keypress and returns key</strong></p>
+
+<ul>
+ <li>IN: Nothing</li> 
+ <li>OUT: AX = key pressed, other regs preserved</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+.loop:
+	call os_wait_for_key
+	cmp al, 'y'
+	je .yes
+	cmp al, 'n'
+	je .no
+	jmp .loop
+</pre>
+
+<br />
+
+
+
+<h3>os_check_for_key</h3>
+<p><strong>Scans keyboard for input, but doesn't wait</strong></p>
+
+<ul>
+ <li>IN: Nothing</li>
+ <li>OUT: AX = 0 if no key pressed, otherwise scan code</li>
+</ul>
+
+<p>Example: see code above</p>
+
+
+<br />
+
+
+
+<hr style="width:50%;" />
+
+
+<a name="syscallmath"></a>
+<h2>Math</h2>
+
+<h3>os_bcd_to_int</h3>
+<p><strong>Converts binary coded decimal number to an integer</strong></p>
+
+<ul>
+ <li>IN: AL = BCD number</li> 
+ <li>OUT: AX = integer value</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov al, 00010110b	; 0001 0110 = 16 (decimal) or 10h in BCD
+	call os_bcd_to_int 
+     
+	; AX now contains the 16 bit-integer 00000000 00010000b
+</pre>
+
+
+<br />
+
+
+<h3>os_long_int_negate</h3>
+<p><strong>Multiply value in DX:AX by -1</strong></p>
+
+<ul>
+ <li>IN: DX:AX = long integer </li>
+ <li>OUT: DX:AX = -(initial DX:AX)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov dx, 01h
+	mov ax, 45h
+	call os_long_int_negate
+
+	; DX now contains 0xFFFF
+	; and AX 0xFEBB
+</pre>
+
+<br />
+
+
+<h3>os_get_random</h3>
+<p><strong>Get a random integer between high and low values (inclusive)</strong></p>
+
+<ul>
+ <li>IN: AX = low integer, BX = high
+ <li>OUT: CX = random number between AX and BX</li>
+</ul>
+
+<br />
+
+
+<hr style="width:50%;" />
+
+
+
+<a name="syscallmisc"></a>
+<h2>Misc</h2>
+
+
+<h3>os_get_api_version</h3>
+<p><strong>Return current version of MikeOS API</strong></p>
+
+<ul>
+ <li>IN: Nothing </li>
+ <li>OUT: AL = API version number</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	call os_get_api_version
+	; AL now contains version number (eg 8)
+</pre>
+
+
+<br />
+
+
+<h3>os_pause</h3>
+<p><strong>Delay execution for specified 10ths of second</strong></p>
+
+<ul>
+ <li>IN: AX = number of 10ths of second to wait</li>
+ <li>OUT: nothing</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	; Halt execution for 3 secs
+
+	mov ax, 30
+	call os_pause
+</pre>
+
+
+<br />
+
+
+
+<h3>os_fatal_error</h3>
+<p><strong>Display error message and halt execution</strong></p>
+
+<ul>
+ <li>IN: AX = error message string location</li>
+ <li>OUT: nothing</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .error_msg
+	call os_fatal_error
+
+	.error_msg	db 'Massive error!', 0
+</pre>
+
+
+<br />
+
+
+
+<hr style="width:50%;" />
+
+
+<a name="syscallports"></a>
+<h2>Ports</h2>
+
+
+<h3>os_port_byte_out</h3>
+<p><strong>Sends a byte to the specified port</strong></p>
+
+<ul>
+ <li>IN: DX = port address, AL = byte</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_port_byte_in</h3>
+<p><strong>Retrieves a byte from the specified port</strong></p>
+
+<ul>
+ <li>IN: DX = port address</li>
+ <li>OUT: AL = byte</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_send_via_serial</h3>
+<p><strong>Send a byte via the serial port</strong></p>
+
+<ul>
+ <li>IN: AL = byte to send via serial</li>
+ <li>OUT: AH = bit 7 clear on success</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov al, 'a'			; Place char to transmit in AL
+	call os_send_via_serial
+	cmp ah, 128			; If bit 7 is set, there's an error
+	jnz all_ok			; Otherwise it's all OK
+	jmp oops_error			; Deal with the error
+</pre>
+
+
+
+<br />
+
+
+
+<h3>os_serial_port_enable</h3>
+<p><strong>Turn on the first serial port</strong></p>
+
+<ul>
+ <li>IN: AX = 0 for normal mode (9600 baud), or 1 for slow mode (1200 baud)</li>
+ <li>OUT: AH = bit 7 clear on success</li>
+</ul>
+
+
+
+<br />
+
+
+
+<h3>os_get_via_serial</h3>
+<p><strong>Get a byte from the serial port</strong></p>
+
+<ul>
+ <li>IN: nothing</li>
+ <li>OUT: AL = byte that was received; OUT: AH = bit 7 clear on success</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	call os_get_via_serial
+	cmp ah, 128		; If bit 7 is set, there's an error.
+	jnz all_ok		; Otherwise it's all OK
+	jmp oops_error		; Deal with the error
+
+all_ok:           
+	mov [rx_byte], al	; Store byte we retrieved
+</pre>
+
+<br />
+
+
+
+<hr style="width:50%;" />
+
+
+
+
+<a name="syscallscreen"></a>
+<h2>Screen</h2>
+
+
+
+
+<h3>os_print_string</h3>
+<p><strong>Displays text</strong></p>
+
+<ul>
+ <li>IN: SI = message location (zero-terminated string)</li>
+ <li>OUT: Nothing (registers preserved)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, .message
+	call os_print_string
+
+	...
+
+	.message	db 'Hello, world', 0
+</pre>
+
+<br />
+
+
+<h3>os_clear_screen</h3>
+<p><strong>Clears the screen to background</strong></p>
+
+<ul>
+ <li>IN/OUT: Nothing (registers preserved)</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_move_cursor</h3>
+<p><strong>Moves cursor in text mode</strong></p>
+
+<ul>
+ <li>IN: DH, DL = row, column </li>
+ <li>OUT: Nothing (registers preserved)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	; Move to middle of screen
+
+	mov dh, 12
+	mov dl, 40
+	call os_move_cursor
+</pre>
+
+
+<br />
+
+
+<h3>os_get_cursor_pos</h3>
+<p><strong>Return position of text cursor</strong></p>
+
+<ul>
+ <li>OUT: DH, DL = row, column</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_print_horiz_line</h3>
+<p><strong>Draw a horizontal line on the screen</strong></p>
+
+<ul>
+ <li>IN: AX = line type (1 for double, otherwise single)</li>
+ <li>OUT: Nothing (registers preserved)</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_show_cursor</h3>
+<p><strong>Turns on cursor in text mode</strong></p>
+
+<ul>
+ <li>IN/OUT: Nothing</li>
+</ul>
+
+
+<br />
+
+
+
+<h3>os_hide_cursor</h3>
+<p><strong>Turns off cursor in text mode</strong></p>
+
+<ul>
+ <li>IN/OUT: Nothing</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_draw_block</h3>
+<p><strong>Render block of specified colour</strong></p>
+
+<ul>
+ <li>IN: BL/DL/DH/SI/DI = colour/start X pos/start Y pos/width/finish Y pos</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov bl, 0100111b	; White on red
+	mov dl, 20		; Start X position
+	mov dh, 2		; Start Y position
+	mov si, 40		; Width
+	mov di, 23		; Finish Y position
+	call os_draw_block
+</pre>
+
+
+<br />
+
+
+<h3>os_file_selector</h3>
+<p><strong>Show a file selection dialog</strong></p>
+
+<ul>
+ <li>IN: Nothing </li>
+ <li>OUT: AX = location of filename string (or carry set if Esc pressed)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	call os_file_selector
+	jc .esc_pressed
+
+	; Now AX points to the chosen filename
+	...
+
+.esc_pressed:
+	...
+</pre>
+
+
+<br />
+
+
+<h3>os_list_dialog</h3>
+<p><strong>Show a dialog with a list of options</strong></p>
+
+<ul>
+ <li>IN: AX = comma-separated list of strings to show (zero-terminated),</li>
+ <li>&nbsp;BX = first help string, CX = second help string</li>
+ <li>OUT: AX = number (starts from 1) of entry selected carry set if Esc pressed</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .list
+	mov bx, .msg1
+	mov cx, .msg2
+	call os_list_dialog
+	jc .esc_pressed
+
+	; Now AX = number (from 1) of option chosen
+	...
+
+.esc_pressed:
+	...
+
+	.list	db 'Open,Close,Reboot', 0
+	.msg1	db 'Choose an option', 0
+	.msg2	db 'Or press Esc to quit', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_draw_background</h3>
+<p><strong>Clear screen with white top and bottom bars, containing text, and a coloured middle section</strong></p>
+
+<ul>
+ <li>IN: AX/BX = top/bottom string locations, CX = colour</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .title_msg
+	mov bx, .footer_msg
+	mov cx, 00100000b	; Colour
+	call os_draw_background
+
+	...
+
+	.title_msg	db 'File manager', 0
+	.footer_msg	db 'Choose an option...', 0
+</pre>
+
+
+<br />
+
+
+
+<h3>os_print_newline</h3>
+<p><strong>Reset cursor to start of next line</strong></p>
+
+<ul>
+ <li>IN/OUT: Nothing (registers preserved)</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_dump_registers</h3>
+<p><strong>Displays register contents in hex on the screen</strong></p>
+
+<ul>
+ <li>IN/OUT: AX/BX/CX/DX = registers to show</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_input_dialog</h3>
+<p><strong>Get text string from user via a dialog box</strong></p>
+
+<ul>
+ <li>IN: AX = string location, BX = message to show </li>
+ <li>OUT: AX = string location</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov bx, .filename_msg
+	mov ax, .filename_input
+	call os_input_dialog
+
+	...
+
+	.filename_msg	'Please enter a filename:', 0
+	.filename_input	times 12 db 0
+</pre>
+
+
+<br />
+
+
+<h3>os_dialog_box</h3>
+<p><strong>Print dialog box in middle of screen, with button(s)</strong></p>
+
+<ul>
+ <li>IN: AX, BX, CX = string locations (set registers to 0 for no display),</li>
+ <li>&nbsp;DX = 0 for single 'OK' dialog, 1 for two-button 'OK' and 'Cancel'</li>
+ <li>OUT: If two-button mode, AX = 0 for OK and 1 for cancel</li>
+ <li>NOTE: Each string is limited to 40 characters</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .string1
+	mov bx, .string1
+	mov cx, .string1
+	mov dx, 1
+	call os_dialog_box
+
+	cmp ax, 1
+	je .first_option_chosen
+
+	; Otherwise second was chosen
+	...
+
+.first_option_chosen:
+	...
+
+	.string1	db 'Welcome to my program!', 0
+	.string2	db 'Please choose to destroy the world,', 0
+	.string3	db 'or play with fluffy kittens.', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_print_space</h3>
+<p><strong>Print a space to the screen</strong></p>
+
+<ul>
+ <li>IN/OUT: nothing</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_dump_string</h3>
+<p><strong>Dump string as hex bytes and printable characters</strong></p>
+
+<ul>
+ <li>IN: SI = points to string to dump</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_print_digit</h3>
+<p><strong>Displays contents of AX as a single digit (works up to base 37, ie digits 0-Z)</strong></p>
+
+<ul>
+ <li>IN: AX = "digit" to format and print</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_print_1hex</h3>
+<p><strong>Displays low nibble of AL in hex format</strong></p>
+
+<ul>
+ <li>IN: AL = number to format and print</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_print_2hex</h3>
+<p><strong>Displays AL in hex format</strong></p>
+
+<ul>
+ <li>IN: AL = number to format and print</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_print_4hex</h3>
+<p><strong>Displays AX in hex format</strong></p>
+
+<ul>
+ <li>IN: AX = number to format and print</li>
+ <li>OUT: Nothing</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_input_string</h3>
+<p><strong>Take string from keyboard entry</strong></p>
+
+<ul>
+ <li>IN/OUT: AX = location of string, other regs preserved</li>
+ <li>(Location will contain up to 255 characters, zero-terminated)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .string
+	call os_input_string
+
+	...
+
+	.string		times 256 db 0
+</pre>
+
+
+<br />
+
+
+
+<hr style="width:50%;" />
+
+
+<a name="syscallstring"></a>
+<h2>String</h2>
+
+
+
+<h3>os_string_length</h3>
+<p><strong>Return length of a string</strong></p>
+
+<ul>
+ <li>IN: AX = string location</li>
+ <li>OUT AX = length (other regs preserved)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	jmp Get_Len
+
+	Test_String db 'This string has 46 characters including spaces', 0
+
+Get_Len:
+	mov ax, Test_String
+	call os_string_length
+	; AX now contains the number 46
+</pre>
+
+
+<br />
+
+
+<h3>os_find_char_in_string</h3>
+<p><strong>Get the position of a character in a string</strong></p>
+
+<ul>
+ <li>IN: SI = string location, AL = character to find</li>
+ <li>OUT: AX = location in string, or 0 if char not present</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+jmp Search_Str
+
+     Test_String db 'This is the test string', 0
+     message_1   db 'Character not found', 0
+     message_2   db 'Character found at position', 0
+     message_3   db '  ', 0
+     str_len     dw  0
+
+Search_Str:
+
+     mov ax, Test_String           ; string to search
+     mov si, ax
+     xor ax, ax                    ; clear ax
+
+     mov al, 'x'                   ; x is the character to find
+     call os_find_char_in_string
+
+     mov [str_len], ax             ; store result
+     cmp ax, 0                  
+     jz Char_Not_Found 
+     jmp Char_Found
+
+Char_Not_Found:
+
+     mov si, message_1
+     call os_print_string     
+     jmp Main_Pgm
+
+Char_Found:
+
+     mov ax, [str_len]             ; convert result into string first
+     mov bx, message_3
+     call os_int_to_string
+
+     mov si, message_2
+     call os_print_string          ; print message_2
+     call os_print_space           ; print a space
+
+     mov si, message_3
+     call os_print_string          ; print the position at which x was found     
+</pre>
+
+
+<br />
+
+
+
+<h3>os_string_reverse</h3>
+<p><strong>Swar order of characters in a string</strong></p>
+
+<ul>
+ <li>IN: SI = location of zero-terminated string</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, mystring
+	call os_string_reverse
+
+	; Now mystring contains 'olleH'
+
+	mystring db 'Hello', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_string_charchange</h3>
+<p><strong>Change instances of character in a string</strong></p>
+
+<ul>
+ <li>IN: SI = string location, AL = char to find, BL = char to replace with</li>
+</ul>
+
+<br />
+
+
+<h3>os_string_uppercase</h3>
+<p><strong>Convert zero-terminated string to upper case</strong></p>
+
+<ul>
+ <li>IN/OUT: AX = string location</li>
+</ul>
+
+
+
+<br />
+
+
+
+<h3>os_string_lowercase</h3>
+<p><strong>Convert zero-terminated string to lower case</strong></p>
+
+<ul>
+ <li>IN/OUT: AX = string location</li>
+</ul>
+
+
+
+<br />
+
+
+
+<h3>os_string_copy</h3>
+<p><strong>Copy one string into another</strong></p>
+
+<ul>
+ <li>IN/OUT: SI = source, DI = destination (programmer ensure sufficient room)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, .old_string
+	mov di, .new_string
+	call os_string_copy
+
+	...
+
+	.old_string	db 'Hello', 0
+	.new_string	times 16 db 0
+</pre>
+
+
+<br />
+
+
+
+<h3>os_string_truncate</h3>
+<p><strong>Chop string down to specified number of characters</strong></p>
+
+<ul>
+ <li>IN: SI = string location, AX = number of characters</li>
+ <li>OUT: string modified, registers preserved</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, .string
+	mov ax, 3
+	call os_string_truncate
+
+	; .string now contains 'HEL', 0
+
+	.string		db 'HELLO', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_string_join</h3>
+<p><strong>Join two strings into a third string</strong></p>
+
+<ul>
+ <li>IN/OUT: AX = string one, BX = string two, CX = destination string</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .string1
+	mov bx, .string2
+	mov cx, .string3
+
+	; CX now points to 'HELLOYOU', 0
+
+	.string1	db 'HELLO', 0
+	.string2	db 'YOU', 0
+	.string3	times 50 db 0
+</pre>
+
+
+<br />
+
+
+<h3>os_string_chomp</h3>
+<p><strong>Strip leading and trailing spaces from a string</strong></p>
+
+<ul>
+ <li>IN: AX = string location</li>
+ <li>OUT: nothing</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, .string
+	call os_string_chomp
+
+	; AX now points to 'KITTEN', 0
+
+	.string		db '  KITTEN  ', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_string_strip</h3>
+<p><strong>Removes specified character from a string</strong></p>
+
+<ul>
+ <li>IN: SI = string location, AL = character to remove</li>
+ <li>OUT: nothing</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, .string
+	mov al, 'U'
+	call os_string_strip
+
+	; .string now contains 'MOSE', 0
+
+	.string		db 'MOUSE', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_string_compare</h3>
+<p><strong>See if two strings match</strong></p>
+
+<ul>
+ <li>IN: SI = string one, DI = string two</li>
+ <li>OUT: carry set if same, clear if different</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, .string1
+	mov di, .string2
+	call os_string_compare
+	jc .same
+
+	; Strings are different
+
+	...
+
+.same:
+	; Strings are the same
+
+	.string1	db 'ONE', 0
+	.string2	db 'TWO', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_string_strincmp</h3>
+<p><strong>See if two strings match up to set number of chars</strong></p>
+
+<ul>
+ <li>IN: SI = string one, DI = string two, CL = chars to check</li>
+ <li>OUT: carry set if same, clear if different</li>
+</ul>
+
+<p>Example: like above, but with CL = number of characters to check</p>
+
+
+<br />
+
+
+<h3>os_string_parse</h3>
+<p><strong>Take string (eg "run foo bar baz") and return pointers to zero-terminated strings (eg AX = "run", BX = "foo" etc.)</strong></p>
+
+<ul>
+ <li>IN: SI = string</li>
+ <li>OUT: AX, BX, CX, DX = individual strings</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, .string
+	call os_string_parse
+
+	; Now AX points to 'This',
+	; BX to 'is',
+	; CX to 'a',
+	; and DX to 'test'
+
+	.string		db 'This is a test', 0
+</pre>
+
+
+
+<br />
+
+
+<h3>os_string_to_int</h3>
+<p><strong>Convert decimal string to integer value</strong></p>
+
+<ul>
+ <li>IN: SI = string location (max 5 chars, up to '65536')</li>
+ <li>OUT: AX = number</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov si, .string
+	call os_string_to_int
+
+	; Now AX contains the number 1234
+
+	.string		db '1234', 0
+</pre>
+
+
+<br />
+
+
+
+<h3>os_int_to_string</h3>
+<p><strong>Convert unsigned value in AX to string</strong></p>
+
+<ul>
+ <li>IN: AX = unsigned integer</li>
+ <li>OUT: AX = location of internal string buffer with result</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, 1234
+	call os_int_to_string
+
+	; Now AX points to '1234', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_sint_to_string</h3>
+<p><strong>Convert signed value in AX to string</strong></p>
+
+<ul>
+ <li>IN: AX = signed integer</li>
+ <li>OUT: AX = location of internal string buffer with result</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>
+	mov ax, -1234
+	call os_int_to_string
+
+	; Now AX points to '-1234', 0
+</pre>
+
+
+<br />
+
+
+<h3>os_long_int_to_string</h3>
+<p><strong>Convert value in DX:AX to string</strong></p>
+
+<ul>
+  <li>IN: DX:AX = long unsigned integer, BX = number base, DI = string location</li>
+  <li>OUT: DI = location of converted string</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_set_time_fmt</h3>
+<p><strong>Set time reporting format (eg '10:25 AM' or '2300 hours')</strong></p>
+
+<ul>
+ <li>IN: AL = format flag, 0 = 12-hr format</li>
+ <li>OUT: nothing</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_get_time_string</h3>
+<p><strong>Get current time in a string (eg '10:25')</strong></p>
+
+<ul>
+ <li>IN/OUT: BX = string location</li>
+</ul>
+
+
+
+<br />
+
+
+<h3>os_set_date_fmt</h3>
+<p><strong>Set date reporting format (M/D/Y, D/M/Y or Y/M/D - 0, 1, 2)</strong></p>
+
+<ul>
+ <li>IN: AX = format flag, 0-2</li>
+ <li>&nbsp;If AX bit 7 = 1 = use name for months</li>
+ <li>&nbsp;If AX bit 7 = 0, high byte = separator character</li>
+ <li>OUT: nothing</li>
+</ul>
+
+
+<br />
+
+
+<h3>os_get_date_string</h3>
+<p><strong>Get current date in a string (eg '12/31/2007')</strong></p>
+
+<ul>
+ <li>IN/OUT: BX = string location</li>
+</ul>
+
+
+
+
+<br />
+
+
+
+<hr style="width:50%;" />
+
+
+<a name="syscallsound"></a>
+<h2>Sound</h2>
+
+<h3>os_speaker_tone</h3>
+<p><strong>Generate PC speaker tone (call os_speaker_off to turn off)</strong></p>
+
+<ul>
+ <li>IN: AX = note frequency</li> 
+ <li>OUT: Nothing (registers preserved)</li>
+</ul>
+
+<p>Example: see code below</p>
+
+
+<br />
+
+
+<h3>os_speaker_off</h3>
+<p><strong>Turn off PC speaker</strong></p>
+
+<ul>
+ <li>IN/OUT: Nothing (registers preserved)</li>
+</ul>
+
+<p>Example:</p>
+
+<pre>; Generate "middle C" 261.626 Hz (263 Hz close enough) for 2 secs
+; 2 secs = 2,000,000 uS which is 1E8480h
+
+	jmp Play_It
+
+	music_note  dw  263
+
+Play_It:
+	mov ax, [music_note]
+	call os_speaker_tone
+
+	mov cx, 1Eh
+	mov dx, 8480h
+	call os_pause
+
+	call os_speaker_off         
+</pre>
+
+
+<br />
+
+
+
+<hr style="width:50%;" />
+
+
+<a name="syscallbasic"></a>
+<h2>BASIC</h2>
+
+<h3>os_run_basic</h3>
+<p><strong>Runs kernel BASIC interpreter at the specified point</strong></p>
+
+<ul>
+ <li>IN: AX = location of BASIC code, BX = size of code (in bytes)</li>
+</ul>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Extra</h2>
+
+<a name="help"></a>
+<h3>Help</h3>
+
+
+<p>If you have any questions about MikeOS, or you're developing a similar OS and want
+to share code and ideas, go to <a href="http://mikeos.berlios.de">the MikeOS website</a>
+and join the mailing list as described. You can then email
+<a href="mailto:mikeos-developer@lists.berlios.de">mikeos-developer@lists.berlios.de</a>
+to post to the list.</p>
+
+
+<br />
+
+
+<a name="license"></a>
+<h3>License</h3>
+
+<p>MikeOS is open source and released under a BSD-like license (see <strong>doc/LICENSE.TXT</strong>
+in the MikeOS <strong>.zip</strong> file). Essentially, it means you can do anything you like with the
+code, including basing your own project on it, providing you retain the license file and give credit
+to the MikeOS developers for their work.</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+

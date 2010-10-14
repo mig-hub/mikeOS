@@ -1,0 +1,507 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>The MikeOS System Developer Handbook</title>
+
+<style type="text/css">
+
+body {
+	font-family: sans-serif;
+}
+
+h1 {
+	margin-top:5px;
+	color: #A00000;
+}
+
+h2 {
+	color: #A00000;
+}
+
+h3 {
+	margin-top:5px;
+	color: #A00000;
+}
+
+hr {
+	border: 0;
+	color: #A00000;
+	background-color: #A00000;
+	height: 3px;
+}
+
+pre {
+	background-color: #F0F0F0;
+	border: 5px solid #F0F0F0;
+}
+
+a {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:visited {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+li {
+	margin-left: -1ex;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<table border="0" cellpadding="10">
+<tr>
+
+
+
+<!-- NAVIGATION PANEL -->
+
+<td style="border:1px solid black; width:160px;" valign="top">
+
+<h3>Navigate</h3>
+
+<p><strong>Overview</strong></p>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#structure">Structure</a></li>
+<li><a href="#memorymap">Memory map</a></li>
+<li><a href="#codepath">Code path</a></li>
+</ul>
+
+<p><strong>Building</strong></p>
+<ul>
+<li><a href="#buildlinux">Linux</a></li>
+<li><a href="#buildwindows">Windows</a></li>
+<li><a href="#buildothers">Others</a></li>
+</ul>
+
+<p><strong>Modifying</strong></p>
+<ul>
+<li><a href="#modoverview">Overview</a></li>
+<li><a href="#systemcalls">System calls</a></li>
+<li><a href="#patches">Patches</a></li>
+</ul>
+
+<p><strong>Extra</strong></p>
+<ul>
+<li><a href="#help">Help</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+
+</td>
+
+
+
+
+
+<!-- MAIN CONTENT PANEL -->
+
+<td valign="top">
+
+<h1>The MikeOS System Developer Handbook</h1>
+
+<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+
+<p>This documentation file explains how to build MikeOS from the source code, make changes
+to the kernel, and add new system calls. If you have any questions, see
+<a href="http://mikeos.berlios.de">the MikeOS website</a> for contact details
+and mailing list information.</p>
+
+<p>Click the links on the left to navigate around this guide.</p>
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Overview</h2>
+
+<a name="introduction"></a>
+<h3>Introduction</h3>
+
+<p>The MikeOS kernel is written in 16-bit x86 real mode assembly language. This provides easy access
+to BIOS routines for handling the keyboard, screen and floppy drive, so that we don't need complicated
+drivers. Therefore most of the code is focused on actual OS aspects: loading programs,
+system calls and so forth.</p>
+
+<p>Additionally, MikeOS avoids the real mode segmentation complications by existing in a single 64K segment.
+The first 32K (0 - 32767) of RAM is reserved for the kernel; the second 32K is for external program code
+and memory.</p>
+
+
+<br />
+
+
+<a name="structure"></a>
+<h3>Structure</h3>
+
+<p>These are the most important files and directories in the MikeOS zip file:</p>
+
+<ul>
+<li><strong>source/</strong> -- Contains the entire OS source code</li>
+<li><strong>source/bootload/</strong> -- Source to generate BOOTLOAD.BIN, which is added to the disk image when building</li>
+<li><strong>source/features/</strong> -- Components of MikeOS such as FAT12 support, string routines etc.</li>
+<li><strong>source/kernel.asm</strong> -- The core kernel source file, which pulls in other source files</li>
+<li><strong>programs/</strong> -- Source code for programs added to the disk image</li>
+</ul>
+
+
+<br />
+
+
+
+<a name="memorymap"></a>
+<h3>Memory map</h3>
+
+<p>This is the makeup of the 64K memory segment after MikeOS has loaded:</p>
+
+<br />
+
+<center>
+<table border="1" cellpadding="10">
+<tr><td><center><br />
+<strong>0 - 24575 (hex: 0h - 5FFFh)</strong><br />
+24K kernel executable code<br />
+<br />- - - - - - - - - - - - - - -<br /><br />
+<strong>24576 - 32767 (hex: 6000h - 7FFFh)</strong><br />
+8K kernel disk operation buffer<br /><br />
+</center></td></tr>
+<tr><td><center>
+<strong>32768 - 65535 (hex: 8000h - FFFFh</strong><br />
+32K space for external programs</center></td></tr>
+</table>
+</center>
+
+<br />
+
+<p>So, the first 32K is devoted to the MikeOS kernel code and its 8K buffer for performing disk operations.
+After that we have another 32K of memory, this time for external programs. These are loaded at the 32K point
+and hence need to be ORGed to 32768 as described in the App Developer Handbook.</p>
+
+
+<br />
+
+
+<a name="codepath"></a>
+<h3>Code path</h3>
+
+<p>When the PC starts up, it loads the bootblock, <strong>BOOTLOAD.BIN</strong>, that was inserted into
+the first sector (512 bytes) of the floppy disk image by the build script. It loads this at memory location
+31744 (7C00h in hex) and begins executing it.</p>
+
+<p><strong>BOOTLOAD.BIN</strong> then scans the floppy disk for <strong>KERNEL.BIN</strong> and loads it at
+memory location <strong>2000h:0000h</strong>. Here, the 2000h is the segment and 0000h is the offset
+in that segment -- you don't need to concern yourself with this, but effectively it means that the kernel is
+loaded at location 131072 (128K) in the PC's RAM. (You get a complete memory location by multiplying the segment
+by 16 and adding the offset.)</p>
+
+<p>Once the bootloader has loaded the kernel, it jumps to memory location 131072 (aka 2000h:0000h)
+to begin executing it. After this, for simplicity we ignore segments and just use offsets (0000h to FFFFh),
+thereby giving us 64K of RAM to use.</p>
+
+<p>At the start of the kernel we have a series of <strong>jmp</strong> instructions.
+Why are these here? Well, the system calls are in semi-random places in the kernel executable.
+As MikeOS evolves, the exact locations of these system calls shifts around; an external program can't guarantee
+where they are. So we have a list of vectors right at the very start of the kernel which <strong>jmp</strong> to these
+calls, so an external program can <strong>call</strong> these vectors and know that they'll never move!</p>
+
+<p>There's a <strong>jmp</strong> just before these vectors to skip over them, and then the main kernel execution
+starts, setting up various things and offering the user a choice of a program list or command line interface.</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Building</h2>
+
+<a name="buildlinux"></a>
+<h3>Linux</h3>
+
+<p><strong>Build requirements:</strong> the NASM assembler, 'mkisofs' utility and root access. We need root
+access because we loopback-mount the floppy disk image to insert our files.</p>
+
+<p>To build MikeOS, open a terminal and switch into the expanded MikeOS package. Enter <strong>sudo bash</strong>
+in Ubuntu-flavoured distros, or just <strong>su</strong> in others, to switch to the root user. Then enter:</p>
+
+<pre>
+./build-linux.sh
+</pre>
+
+<p>This will use NASM to assemble the bootloader, kernel and supplied programs, then write the bootloader to the
+<strong>mikeos.flp</strong> floppy disk image in the <strong>disk_images/</strong> directory. (It writes the 512-byte
+bootloader to the first sector of the floppy disk image to create a boot sector and set up a DOS-like
+filesystem.) Next, the build script loopback-mounts the <strong>mikeos.flp</strong> image onto the filesystem - in other
+words, mounting the image as if it was a real floppy. The script copies over the kernel (<strong>mikekern.bin</strong>)
+and binaries from the <strong>programs/</strong> directory, before unmounting the floppy image.</p>
+
+<p>With that done, the script runs the 'mkisofs' utility to generate a CD-ROM ISO image of MikeOS, injecting
+the floppy image as a boot section. So we end up with two files in the <strong>disk_images/</strong> directory:
+one for floppy disks and one for CD-Rs. You can now use them in an emulator or on a real PC as described in
+the Running section above.</p>
+
+
+<br />
+
+
+<a name="buildwindows"></a>
+<h3>Windows</h3>
+
+<p>Get the latest version of NASM for Windows from <a href="http://www.nasm.us/pub/nasm/releasebuilds/">this site</a>
+(look for the 'win32' package. Then extract the <strong>nasm.exe</strong> file into your Windows folder (or somewhere in the path).</p>
+
+<p>The ImDisk Virtual Disk Driver is needed since Windows does not have a
+built-in mechanism for loopback drives. Get it from <a href="http://www.ltr-data.se/files/imdiskinst.exe">here</a>
+(or Google it if the link is outdated). After downloading run imdiskinst.exe to install. Follow the default prompts
+during the install. Also get <a href="http://www.osdever.net/downloads/other/pcopy02.zip">PartCopy</a> for copying
+the bootloader on to the disk image.</p>
+
+<p>To build MikeOS, double-click on <strong>build-win.bat</strong> or run it from the command line.
+This batch file calls NASM to do the work needed to compile MikeOS and its applications.
+This script mounts the floppy disk image as if it were a real disk, using:</p>
+
+<pre>
+imdisk -a -f mikeos.flp -s 1440K -m B:
+</pre>
+
+<p>You can use that command outside of <strong>build-win.bat</strong> if you want to add files to <strong>mikeos.flp</strong>,
+and unmount it with:</p>
+
+<pre>
+imdisk -d -m B:
+</pre>
+
+<p>Lastly, to test in the <a href="http://www1.interq.or.jp/~t-takeda/qemu/qemu-0.9.1-windows.zip">QEMU PC emulator</a>,
+Extract QEMU to somewhere on your computer -- <strong>C:\</strong> is best. Then enter: the following to run MikeOS under QEMU:</p>
+
+<pre>
+qemu.exe -L . -m 4 -boot a -fda mikeos.flp -soundhw all -localtime
+</pre>
+
+<p>Make sure you put the proper path names in! Ask on the mailing list if you have any problems.</p>
+
+
+
+<br />
+
+<a name="buildothers"></a>
+<h3>Others</h3>
+
+<p>Along with the scripts for building on Linux and Windows, you'll also find scripts for Mac OS X and OpenBSD.
+These have not been as thoroughly tested as the others, so if you find any glitches, please let us know!</p>
+
+<p>If you want to make a build script for a new platform, it needs to:</p>
+
+<ol>
+<li>Assemble the bootloader and add it to the first sector of <strong>mikeos.flp</strong></li>
+<li>Assemble the kernel and copy it onto the floppy</li>
+<li>Assemble the add-on programs and copy them onto the floppy</li>
+</ol>
+
+<p>So you will need some way of copying the 512 byte bootsector into a floppy image, and loopback mounting the
+image to copy across the kernel and programs.</p>
+
+
+<br />
+
+
+
+<hr noshade="noshade" />
+
+
+<h2>Modifying</h2>
+
+<a name="modoverview"></a>
+<h3>Overview</h3>
+
+<p>To test out code, the simplest approach is to create a new app in the <strong>programs/</strong> directory, build
+MikeOS and run your program. You can then be guaranteed that your code isn't interfering with the kernel code (at least
+at the assembling stage!). When you're happy with it, you may want to introduce it into <strong>source/kernel.asm</strong>
+or a specific file in <strong>source/features/</strong>.</p>
+
+<p>Note that the files in <strong>source/features/</strong> correspond to the system calls in <strong>programs/mikedev.inc</strong>
+(and detailed in the App Developer Handbook), but those source files also include internal calls that are used by the kernel and
+are not accessible to user programs. So use 'grep' or the search tool of your choice to find specific calls if they're not
+available through the API.</p>
+
+<br />
+
+
+<a name="systemcalls"></a>
+<h3>System calls</h3>
+
+<p>Adding new system calls is easy and fun - it extends MikeOS! So if you want to help out, this is the best way to start.
+Open up <strong>source/features/screen.asm</strong> in a text editor and paste in the following after the header text:</p>
+
+
+<pre>
+; -----------------------------------------------------------------
+; os_say_hello -- Prints 'Hello' to the screen
+; IN/OUT: Nothing
+
+os_say_hello:
+	pusha
+
+	mov si, .message
+	call os_print_string
+
+	popa
+	ret
+
+	.message db 'Hello', 0
+</pre>
+
+<p>There we have it: a new system call that prints 'Hello' to the screen. Hardly a much-needed feature, but it's
+a starting point. The first three lines are comments explaining what the call does, and what registers it accepts
+or returns (like variable passing in high-level languages). Then we have the <strong>os_say_hello:</strong> label
+which indicates where the code starts, before a <strong>pusha</strong>.</p>
+
+<p>All system calls should start with <strong>pusha</strong> and end with <strong>popa</strong> before <strong>ret</strong>:
+this stores registers on the stack at the start, and then pops them off at the end, so that we don't end up changing
+a bunch of registers and confusing the calling program. (If you're passing back a value, say in AX, you should
+store AX in a temporary word and drop it back in between the <strong>popa</strong> and <strong>ret</strong>, as
+seen in <strong>os_wait_for_key</strong> in <strong>keyboard.asm</strong>.)</p>
+
+<p>The body of our code simply places the location of our message string into the SI register, then calls another
+MikeOS routine, <strong>os_print_string</strong>. You can freely call other routines from your own system call.</p>
+
+<p>Once we've done this, we can access this routine throughout the kernel. But what about external programs? They
+have no idea where this call is in the kernel! The trick we use is <strong>vectors</strong> - a bunch of <strong>jmp</strong>
+instructions at the start of our kernel code, which jump to these routines. Because these vectors are at the start,
+they never change their position, so we always know where they are.</p>
+
+<p>For instance, right now, your new system call may be at 0x9B9D in the kernel. But if you add another call before it,
+or someone else does, it may move to 0x9FA6 in the kernel binary. We simply don't know where it's going to be. But
+if we put at vector at the start of our kernel, before anything else happens, we can use that as the starting point
+as the vector will never move!</p>
+
+<p>Open up <strong>source/kernel.asm</strong> and scroll down to the list of system call vectors. You can see they start
+from 0003h. Scroll to the bottom of the list and you'll see something like this:</p>
+
+<pre>
+	jmp os_run_basic		; 00C6h
+</pre>
+
+<p>The comment here indicates where this bit of code lies in the kernel binary. Once again, it's static, and
+basically says: if your program wants to call <strong>os_run_basic</strong>, it should call 00C6h, as
+this jumps to the required routine and will never change position.</p>
+
+<p>Let's add a vector to our new call. Add this beneath the existing vectors:</p>
+
+<pre>
+	jmp os_say_hello		; 00C9h
+</pre>
+
+<p>How do we know this <strong>jmp</strong> is at 00C9h in the kernel binary? Well, just follow the pattern in the 
+<strong>jmp</strong>s above - it's pretty easy to guess. If you're unsure, you can always use 
+<strong>ndisasm</strong> to disassemble the kernel and look for the location of the final 
+<strong>jmp</strong> in the list.</p>
+
+<p>That's all good and well, but there's one last thing: people writing external programs don't want to 
+call an ugly number like 00C9h when they run our routine. They want to access it by name, so we need 
+to add a line to <strong>mikedev.inc</strong> in the <strong>programs/</strong> directory:</p>
+
+<pre>
+os_say_hello	equ	00C9h	; Prints 'Hello' to screen
+</pre>
+
+<p>Now, any program that includes <strong>mikedev.inc</strong> will be able to call our routine by name.
+Et voila: a brand new system call for MikeOS!</p>
+
+
+<br />
+
+
+<a name="patches"></a>
+<h3>Patches</h3>
+
+<p>If you've made some improvements or additions to MikeOS and wish to submit them, great! If they're small changes -
+such as a bugfix or minor tweak - you can paste the altered code into an email. Explain what it does and where it
+goes in the source code, and if it's OK, we'll include it.</p>
+
+<p>If your change is larger (eg a system call) and affects various parts of the code, you're better off with a
+patch. On UNIX-like systems such as Linux, you can use the <strong>diff</strong> command-line utility to generate
+a list of your changes. For this, you will need the original (release) source code tree of MikeOS, along with the
+tree of your modified code. For instance, you may have the original code in a directory called
+<strong>mikeos-4.0/</strong> and your enhanced version in <strong>new-mikeos-4.0/</strong>.</p>
+
+<p>Switch to the directory beneath these, and enter:</p>
+
+<pre>
+diff -ru mikeos-4.0 new-mikeos-4.0 &gt; patch.txt
+</pre>
+
+<p>This collates the differences between the two directories, and directs the output to the file <strong>patch.txt</strong>.
+Have a look at the file to make sure it's OK (you can see how it shows which lines have changed), and then attach the
+file to an email.</p>
+
+<p>Please post fixes and patches to the MikeOS mailing list (see <a href="http://mikeos.berlios.de">the website</a>).</p>
+
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+
+
+
+
+<h2>Extra</h2>
+
+<a name="help"></a>
+<h3>Help</h3>
+
+
+<p>If you have any questions about MikeOS, or you're developing a similar OS and want
+to share code and ideas, go to <a href="http://mikeos.berlios.de">the MikeOS website</a>
+and join the mailing list as described. You can then email
+<a href="mailto:mikeos-developer@lists.berlios.de">mikeos-developer@lists.berlios.de</a>
+to post to the list.</p>
+
+
+<br />
+
+
+<a name="license"></a>
+<h3>License</h3>
+
+<p>MikeOS is open source and released under a BSD-like license (see <strong>doc/LICENSE.TXT</strong>
+in the MikeOS <strong>.zip</strong> file). Essentially, it means you can do anything you like with the
+code, including basing your own project on it, providing you retain the license file and give credit
+to the MikeOS developers for their work.</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+

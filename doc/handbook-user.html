@@ -1,0 +1,457 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>The MikeOS User Handbook</title>
+
+<style type="text/css">
+
+body {
+	font-family: sans-serif;
+}
+
+h1 {
+	margin-top:5px;
+	color: #69A000;
+}
+
+h2 {
+	color: #69A000;
+}
+
+h3 {
+	margin-top:5px;
+	color: #69A000;
+}
+
+hr {
+	border: 0;
+	color: #69A000;
+	background-color: #69A000;
+	height: 3px;
+}
+
+pre {
+	background-color: #F0F0F0;
+	border: 5px solid #F0F0F0;
+}
+
+a {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:visited {
+	text-decoration: none;
+	color: #0000F0;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+li {
+	margin-left: -1ex;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<table border="0" cellpadding="10">
+<tr>
+
+
+
+<!-- NAVIGATION PANEL -->
+
+<td style="border:1px solid black; width:160px;" valign="top">
+
+<h3>Navigate</h3>
+
+<p><strong>Booting</strong></p>
+<ul>
+<li><a href="#diskimages">Disk images</a></li>
+<li><a href="#writing">Writing</a></li>
+<li><a href="#realpcs">Real PCs</a></li>
+<li><a href="#emulators">Emulators</a></li>
+</ul>
+
+<p><strong>Running</strong></p>
+<ul>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#programs">Programs</a></li>
+<li><a href="#copyingfiles">Copying files</a></li>
+<li><a href="#monitor">Monitor</a></li>
+<li><a href="#serialport">Serial port</a></li>
+</ul>
+
+<p><strong>Extra</strong></p>
+<ul>
+<li><a href="#help">Help</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+
+</td>
+
+
+
+
+
+<!-- MAIN CONTENT PANEL -->
+
+<td valign="top">
+
+<h1>The MikeOS User Handbook</h1>
+
+<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+
+<p>This documentation file explains how to boot and use the MikeOS operating system on a real PC or an
+emulator. If you have just downloaded MikeOS and want to run it, this is the guide you need. If you have
+any questions, see <a href="http://mikeos.berlios.de">the MikeOS website</a> for contact details
+and mailing list information.</p>
+
+<p>Click the links on the left to navigate around this guide.</p>
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Booting</h2>
+
+<a name="diskimages"></a>
+<h3>Disk images</h3>
+
+<p>After you have extracted the MikeOS <strong>.zip</strong> file, switch into the
+<strong>disk_images/</strong> directory and you'll see three files:</p>
+
+<ul>
+<li><strong>mikeos.flp</strong> -- Floppy disk image containing MikeOS and programs</li>
+<li><strong>mikeos.dmg</strong> -- Same as above, but with a Mac-friendly extension</li>
+<li><strong>mikeos.iso</strong> -- CD ISO image built using the floppy disk image</li>
+</ul>
+
+<p>So, these files are virtual disk images that you can write to real floppy disks or
+CD-Rs, or run in a PC emulator as described in a moment.</p>
+
+
+<br />
+
+
+<a name="writing"></a>
+<h3>Writing</h3>
+
+<p>For running MikeOS on a real PC, you will need to write one of the virtual disk images
+to physical media. If you have a USB key then this is simple -- we can write the floppy disk
+image to the USB key, and the PC will boot it like a virtual floppy.</p>
+
+<p>On Linux, insert your USB key and unmount it when it appears (but don't remove it). Then open a command line
+window and enter <strong>dmesg</strong> to view the kernel messages. You will see an indication at the end of the messages of the device you just plugged
+in -- eg <strong>/dev/sdb</strong>. Note that you just need the device, eg /dev/sdb, rather than the number (eg /dev/sdb1). Then enter (in the disk_images directory):</p>
+
+<pre>dd if=mikeos.flp of=/dev/sdb</pre>
+
+<p>Of course, replace sdb with the device node. The key is now ready for booting.</p>
+
+<p>On Windows, download the open source <a href="http://translate.google.com/translate?u=http%3A%2F%2Fshounen.ru%2Fsoft%2Fflashnul%2F&amp;hl=en&amp;ie=UTF8&amp;sl=ru&amp;tl=en">Flashnul</a> program, plug in your USB key and
+enter <strong>flashnul -p</strong> to get a list of drives. When you've spotted your USB key, enter
+<strong>flashnul [number] -L mikeos.flp</strong> (in the disk_images directory), replacing [number]
+with the number you got before. The key is now ready for booting.</p>
+
+<p>Note: if you plug your USB key back into the machine, the operating system may try to alter the
+partition structure and stop it from working properly. So treat it as a MikeOS-only key until you
+want to reformat it for normal use.</p>
+
+<p>For floppy disks, on Windows you can use a program called <a href="http://www.chrysocome.net/rawwrite">RawWrite</a>
+to copy <strong>mikeos.flp</strong> to a floppy disk. On Linux, use the <strong>dd</strong>
+utility like this:</p>
+
+<pre>dd if=mikeos.flp of=/dev/fd0</pre>
+
+<p>If you want to run MikeOS on a machine that doesn't have a floppy drive and doesn't
+boot from USB keys, you can burn and boot the <strong>mikeos.iso</strong> CD image. Any decent Windows CD burning software will
+allow you to write an ISO image to a CD-R; if you don't have one, try <a href="http://infrarecorder.org">InfraRecorder.</a></p>
+
+<p>On Linux, a graphical burning program such as K3b should do the trick, or you can use
+the command line:</p>
+
+<pre>cdrecord -dao dev=/dev/cdrom mikeos.iso</pre>
+
+
+<br />
+
+
+<a name="realpcs"></a>
+<h3>Real PCs</h3>
+
+<p>At a minimum, any 386 PC with 1MB of memory and a keyboard should be able to run MikeOS. In
+fact, you may be able to get it running on an older machine -- please do let us know if so! Just
+start your PC with the MikeOS floppy, CD-ROM or USB key inserted, and you should see the initial
+dialog screen.</p>
+
+<p>On some systems, you may need to change the boot order in your BIOS so that the PC boots
+from the floppy, CD or USB key rather than the hard drive.</p>
+
+
+<br />
+
+
+<a name="emulators"></a>
+<h3>Emulators</h3>
+
+<p>A quick way to try MikeOS, and one that doesn't involve writing disk images to physical media,
+is to use an emulator. This is particularly useful if you're writing MikeOS software or changing
+the OS as described in the other two Handbooks.</p>
+
+<p>Some of the best emulators:</p>
+
+<ul>
+<li><strong>QEMU</strong> -- Small, simple and open source (<a href="http://www.bellard.org/qemu/">link</a>)</li>
+<li><strong>VirtualBox</strong> -- Very powerful with a good GUI (<a href="http://www.virtualbox.org">link</a>)</li>
+<li><strong>VMware</strong> -- Popular proprietary virtualisation app (<a href="http://www.vmware.com">link</a>)</li>
+<li><strong>Bochs</strong> -- Takes a bit of work to set up, but good debugging tools (<a href="bochs.sourceforge.net">link</a>)</li>
+</ul>
+
+<p>For VirtualBox and VMware, configure the boot device to use the MikeOS floppy disk or CD ISO image.
+With QEMU on Linux, run <strong>test-linux.sh</strong>, or for QEMU on Windows switch into the directory
+where you installed the emulator and enter:</p>
+
+<pre>
+qemu.exe -L . -m 4 -boot a -fda mikeos.flp -soundhw all -localtime
+</pre>
+
+<p>You will need to change the path to <strong>mikeos.flp</strong> accordingly.</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Running</h2>
+
+<a name="usage"></a>
+<h3>Usage</h3>
+
+<p>When MikeOS starts up, you'll see a dialog box which gives you the option of a program
+list of a command line interface. Using the cursor keys and Enter, choose OK for the former
+and Cancel for the latter.</p>
+
+<p>In the program list you can select a <strong>.BIN</strong> or <strong>.BAS</strong> program with the up/down cursor
+keys and hit Enter to run it. Also, you can press Esc to return back to the original list/CLI
+selection screen.</p>
+
+<p>At the command line, enter <strong>DIR</strong> to show a list of programs, and <strong>HELP</strong>
+to display inbuilt commands. You can run a program by entering the full filename (eg <strong>HELLO.BIN</strong>)
+or just the name without the extension (eg <strong>HELLO</strong>).</p>
+
+
+<br />
+
+
+<a name="programs"></a>
+<h3>Programs</h3>
+
+<p>MikeOS includes several programs to perform various tasks and demonstrate features of the OS, such as:</p>
+
+<ul>
+<li><strong>EDIT.BIN</strong> -- Simple full-screen text editor (Unix-type text files only)</li>
+<li><strong>EXAMPLE.BAS</strong> -- Demonstration of BASIC features (open it in EDIT.BIN to explore)</li>
+<li><strong>FILEMAN.BIN</strong> -- Delete, rename and copy files on the floppy disk</li>
+<li><strong>HANGMAN.BIN</strong> -- Guess the names of cities around the world</li>
+<li><strong>KEYBOARD.BIN</strong> -- Musical keyboard; use the bottom row of keys to play and Q to quit</li>
+<li><strong>MONITOR.BIN</strong> -- Simple machine code monitor (see below)</li>
+<li><strong>SERIAL.BIN</strong> -- Minicom-like serial terminal program (see below)</li>
+<li><strong>VIEWER.BIN</strong> -- Views text files and 320x200x16 PCX images such as <strong>TEST.PCX</strong></li>
+</ul>
+
+<p>Note that <strong>FILEMAN.BIN</strong> and <strong>EDIT.BIN</strong> try to write to the floppy drive,
+so if you've booted from a CD-R and try to manipulate files you will see write errors as it's a read-only
+medium after burning.</p>
+
+
+<br />
+
+
+<a name="copyingfiles"></a>
+<h3>Copying files</h3>
+
+<p>If you've written MikeOS to a real floppy disk, you can just copy extra files
+onto that disk in your file manager. But if you want to add files to the floppy disk images,
+that requires a bit of extra work -- you need to access the disk image as if it was a real
+floppy. First up is Linux switch to the the MikeOS main directory, then enter the following 
+commands as root:</p>
+
+<pre>
+mkdir looptmp
+mount -o loop -t vfat disk_images/mikeos.flp looptmp
+</pre>
+
+<p>Now the contents of the MikeOS virtual floppy disk image are accessible in the newly-created <strong>looptmp/</strong>
+directory. (We have loopback-mounted the disk image onto our filesystem.) Copy your programs into that directory, for example:</p>
+
+<pre>
+cp MYPROG.BIN looptmp/
+</pre>
+
+<p>When you're done, unmount the virtual floppy image and remove the temporary directory:</p>
+
+<pre>
+umount looptmp
+rm -rf looptmp
+</pre>
+
+<p>You can now write <strong>mikeos.flp</strong> to a floppy disk or boot it in an emulator. If you want
+to recreate the CD ISO image, run <strong>build-linux.sh</strong> as root; this will update <strong>mikeos.iso</strong>
+with the new floppy contents.</p>
+
+<p>If you're running Windows, you will need a special program to access <strong>mikeos.flp</strong> as if it
+was a real floppy. One tool you can use is the <a href="http://www.ltr-data.se/files/imdiskinst.exe">ImDisk
+Virtual Disk Driver</a>; download and run it to install. You can then mount the floppy disk image like this:</p>
+
+<pre>
+imdisk -a -f mikeos.flp -s 1440K -m B:
+</pre>
+
+Copy your files into the <strong>B:</strong> drive. When you are finished, enter:
+
+<pre>
+imdisk -d -m B:
+</pre>
+
+<p>Now the files that you copied to <strong>B:</strong> have been written into <strong>mikeos.flp</strong>.</p>
+
+
+<br />
+
+
+<a name="monitor"></a>
+<h3>Monitor</h3>
+
+<p>Yutaka Saito has contributed a MikeOS program that lets you enter machine code in hexadecimal format
+and execute it. Run <strong>MONITOR.BIN</strong> from the command line and you'll be presented
+with a '=' prompt. Now you can enter your instructions, or just 'x' to exit back to the OS.</p>
+
+<p>MikeOS programs are loaded at the 32K (32768) point. The monitor converts hex code and executes
+it at location 36864 in RAM -- that is, 4K after the where the monitor program is loaded. This is
+so that your code doesn't overwrite the monitor! Consequently, any code you run should
+be ORGed to 36864. For example, this is a small MikeOS program which displays the letter 'M' on
+the screen. After we've assembled it, we can run <strong>ndisasm</strong> on the resulting binary
+to see the hexadecimal codes:</p>
+
+<br />
+
+<center>
+<table width="50%" cellpadding="3" border="1">
+<tr><td><strong>Source code</strong></td><td><strong>Hexadecimal</strong></td></tr>
+<tr><td>BITS 16</td><td>&nbsp;</td></tr>
+<tr><td>%INCLUDE "mikedev.inc"</td><td>&nbsp;</td></tr>
+<tr><td>ORG 36864</td><td>&nbsp;</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>mov si, message</td><td>BE0790</td></tr>
+<tr><td>call os_print_string</td><td>E8FD6F</td></tr>
+<tr><td>ret</td><td>C3</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>message db 'M', 0</td><td>4D00</td></tr>
+</table>
+</center>
+
+<br />
+
+<p>(The first three lines are merely assembly directives, so they don't generate any code.) Now
+that we have the hex codes, we can enter them into the monitor. Note that the code must be terminated
+with a dollar sign ($) character, and spaces are allowed. So, you can enter at the '=' prompt:</p>
+
+<pre>BE0790 E8FD6F C3 4D00$</pre>
+
+<p>When you enter this, the monitor will convert the hex codes to machine code at location 36864 in
+RAM, and call that location to execute it. (Just like normal MikeOS programs, you should finish with
+a <strong>ret</strong> instruction.) After execution, you'll be returned to the monitor. You can then
+enter 'r' to re-run the converted code, or 'x' to exit.</p>
+
+
+<br />
+
+
+<a name="serialport"></a>
+<h3>Serial port</h3>
+
+<p>You can use MikeOS as a Minicom-like serial terminal emulator with <strong>SERIAL.BIN</strong>. This lets
+you connect a MikeOS machine to, for instance, a UNIX machine, and operate the UNIX machine from
+MikeOS. Connect a serial (null-modem) cable between the two machines, then set up your UNIX machine
+with a terminal session on the serial port.</p>
+
+<p>For instance, if you have a Linux machine, you would add a line like this to /etc/inittab:</p>
+
+<pre>
+T0:2345:respawn:/sbin/getty/ -L ttyS0 9600 vt100
+</pre>
+
+<p>When you restart your Linux machine, it will wait for a login on the serial port. Connect
+the null-modem cable to a MikeOS machine, and run SERIAL.BIN in MikeOS. You can now enter your
+username and password to log in.</p>
+
+<p>Note that MikeOS configures the serial port to be 9600 baud, no parity, 8 data bits, 1 stop
+bit. If you wish to change these settings, edit <strong>source/features/serial.asm</strong> and see the port
+port setup code at the start of the file (then rebuild MikeOS as described in the <em>System Developer Handbook</em>).
+Also note that only a handful of VT100 commands have been implemented at present, so programs which do complicated
+things with the screen (such as Emacs) may not display properly.</p>
+
+<p>To exit the program, press the F8 key. (You can change this to a different key by editing
+the source code near the start of <strong>programs/serial.asm</strong>.)</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+<h2>Extra</h2>
+
+<a name="help"></a>
+<h3>Help</h3>
+
+
+<p>If you have any questions about MikeOS, or you're developing a similar OS and want
+to share code and ideas, go to <a href="http://mikeos.berlios.de">the MikeOS website</a>
+and join the mailing list as described. You can then email
+<a href="mailto:mikeos-developer@lists.berlios.de">mikeos-developer@lists.berlios.de</a>
+to post to the list.</p>
+
+
+<br />
+
+
+<a name="license"></a>
+<h3>License</h3>
+
+<p>MikeOS is open source and released under a BSD-like license (see <strong>doc/LICENSE.TXT</strong>
+in the MikeOS <strong>.zip</strong> file). Essentially, it means you can do anything you like with the
+code, including basing your own project on it, providing you retain the license file and give credit
+to the MikeOS developers for their work.</p>
+
+
+<br />
+
+
+<hr noshade="noshade" />
+
+
+</td>
+</tr>
+</table>
+
+
+</body>
+</html>
+

@@ -1,0 +1,703 @@
+==================================================================
+MikeOS -- Open source 16-bit operating system for x86 PCs
+Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+==================================================================
+
+
+4.1 (17 January 2010)
+---------------------
+
+# BASIC variable assignment enhanced: can now take multiple values
+  and variables, eg "x = a + 2 * b + 3" (thanks Steve)
+
+# Two new system calls: os_port_byte_out and os_port_byte_in --
+  send/receive bytes from ports (thanks Paulo)
+
+# os_serial_port_enable system call: now takes 0 in AX for normal
+  mode (9600 baud as before), or 1 for a new slow mode (1200 baud)
+
+# New SERIAL command in BASIC: "SERIAL ON 1200" or "SERIAL ON 9600"
+  to enable, "SERIAL SEND X" or "SERIAL SEND 50" to send a byte,
+  and "SERIAL REC X" to receive a byte into a variable
+
+# New PORT command in BASIC: "PORT OUT 1234 X" or "PORT OUT 1234 20"
+  to send byte to a port, and "PORT IN 1234 X" to receive a byte
+
+# source/features/serial.asm renamed to source/features/ports.asm
+  as it now contains new non-serial routines
+
+# os_get_random rewritten: now takes low and high values in AX and
+  BX, and returns random int between them (inclusive) in CX; also
+  has new os_seed_random routine used by the kernel (thanks Ian)
+
+# New RAND command in BASIC: generates a random number between two
+  values and stores the result in a variable
+
+# CLI command checking code simplified -- no need to point SI to
+  the input string each time (thanks Ian)
+
+# BASIC CURSORCHAR command is now CURSCHAR, so that it doesn't
+  look like a superset of the CURSOR command
+
+# API bumped to version 13
+
+# Handbook updates and fixes
+
+
+
+4.0 (20 November 2009)
+----------------------
+
+# MikeOS BASIC included in the kernel; run EXAMPLE.BAS to try
+  it out, and see doc/handbook-appdev-basic.html for a guide
+
+# os_run_basic call accessible to use programs: takes AX as start
+  of code location, and BX as size of the code (in bytes)
+
+# App menu and CLI can now run .BAS programs as well as .BIN
+
+# EDIT.BIN can edit .BAS files; press F8 to run the
+  currently-being-edited code in the BASIC intepreter
+
+# EDIT.BIN: F5 deletes whole lines; Backspace key now functions,
+  although newlines still need to be removed with Delete; Esc
+  quits without saving -- press F2 to save (as per bottom bar)
+
+# If AUTORUN.BIN or AUTORUN.BAS exists on the disk, it will be
+  executed immediately after the kernel has loaded, before showing
+  the normal program launcher menu
+
+# EDIT.BIN now pops up an error dialog if it can't save a file
+
+# source/features/string.asm: os_string_strip rewritten -- shorter
+  and saves 256 bytes (thanks to Ian Seyler)
+
+# source/features/misc.asm: rewrote os_pause routine -- it now takes
+  AX = tenths of a second to wait (so eg AX = 30 = 3 seconds)
+
+# programs/hello.asm and programs/gfxdemo.asm removed (and their binaries
+  on the floppy) -- old and not useful now
+
+# os_dialog_box no longer raises a fatal error if strings are too long to
+  fit in the box
+
+# source/features/disk.asm: os_write_file no longer overwrites a file
+  if it already exists; instead it bails out (carry flag set)
+
+# API version bumped to 12
+
+# source/features/disk.asm: filename checking and file writing bugfixes
+
+# doc/handbook-appdev.html renamed doc/handbook-appdev-asm.html
+
+
+
+3.3 (20 February 2009)
+----------------------
+
+# New program: EDIT.BIN -- a full-screen text editor (for Unix-formatted
+  text files)
+
+# README.TXT is no longer copied to the disk images; instead,
+  programs/sample.txt is added for use in EDIT.BIN
+
+# CLI now includes CAT command to display a file: 'CAT FOO.TXT'
+
+# Music keyboard (KEYBOARD.BIN) given new interface to show a
+  visual representation of a music keyboard
+
+# os_write_file now removes an older version of the specified file,
+  if it exists, before performing the write operation
+
+# CLI code (source/features/cli.asm) cleaned up -- split into sections
+  with fewer local labels
+
+# os_string_parse call is now accessible to external programs
+
+# Disk calls now convert a filename to uppercase automatically, so
+  there's no need for the calling code to do it
+
+# API version bumped to 11
+
+
+
+3.2 (25 January 2009)
+---------------------
+
+# New system call: os_sint_to_string from Tslil -- converts a
+  signed integer to a string
+
+# os_int_to_string rewritten by Tslil; cleaner code, and no longer
+  needs to be passed BX for a string location (it returns a pointer
+  to an internal string via AX)
+
+# New system call: os_serial_port_enable -- initialises the port
+
+# Serial port is no longer initialised by the kernel, but by any
+  external programs that need it (eg in programs/serial.asm)
+
+# New system call: os_string_reverse (source/features/string.asm)
+
+# os_filename_convert removed; source/features/disk.asm now does
+  the conversion internally
+
+# API version bumped to 10
+
+# Handbooks updated with API changes
+
+# build-openbsd.sh updated by Takayoshi
+
+
+
+3.1 (4 January 2009)
+--------------------
+
+# HANGMAN game added, in which the player works out names of cities
+
+# PCXVIEW program renamed to VIEWER, and can display text files
+  as well as images
+
+# FILEMAN program now has an option to show a file's size
+
+# New system call: os_string_charchange (source/features/string.asm),
+  switches all instances of a specified char to a different one
+
+# New system call: os_get_random (source/features/math.asm), generates
+  integer between 0 and 255 using the BIOS clock
+
+# API bumped to version 9
+
+# os_draw_block routine (source/features/screen.asm) now available
+  to user programs
+
+# When a program is called from the app selector, there's no longer a
+  key press prompt after the program has finished
+
+# os_dialog_box uses coloured blocks to denote highlighted button instead
+  of '[=' characters
+
+# os_string_strip now uses its own buffer (not the OS disk buffer)
+
+# Keyboard codes (eg KEY_ESC) and more colours added to programs/mikedev.inc
+
+# os_get_file_size system call fixed
+
+# Registers AX, BX, CX, DX, SI, DI cleared to zero before program execution
+  to ease debugging
+
+# MONITOR program has better help text at the start
+
+# build-win.bat renamed buildwin.bat (more suitable in DOS)
+
+# Build scripts copy README.TXT to the floppy image, for reading
+  in the new VIEWER program
+
+
+
+3.0 (21 December 2008)
+----------------------
+
+# Memory map shuffled: first 24K is kernel code space; then 8K buffer for
+  kernel disk operations; then 32K for external programs
+
+# Major code simplification and cleanup: removed mouse support,
+  DOS support, STAKAN.BIN, testzone, CLI PROMPT command; many of these
+  features will continue to be developed in the TomOS project
+
+# Source code restructured: bootloader moved to source/bootload;
+  system calls now separated into multiple files in source/features/;
+  os_main.asm renamed kernel.asm; kernel file is now KERNEL.BIN
+
+# More code cleanup work: use 'mov ax, 0' instead of 'xor ax, ax' and
+  'mov si, foo' instead of 'lea si, [foo]'; more comments; instances of
+  8 spaces changed to tabs; hex notation now always uses 'h' suffix
+  (eg always '10h' and never '0x10') for consistency
+
+# Certain disk routines for manipulating the FAT and root directory have
+  been made internal to source/features/disk.asm, and not accessible to
+  user programs, to simplify the disk API
+
+# New system call: os_string_parse takes a string pointer in SI and
+  breaks it into zero-terminated smaller string pieces based on spaces;
+  eg SI = 'Foo bar baz stuff' returns AX = 'Foo', BX = 'bar',
+  CX = 'baz', DX = 'stuff'
+
+# New system call: os_string_to_int takes a decimal string (max '65535')
+  in SI and returns the numerical value in AX
+
+# File manager (FILEMAN.BIN) can now copy files (up to 28K in size), using
+  external program RAM -- first 4K is reserved for the file manager itself
+
+# os_get_file_list now returns sanitised comma-separated list of files
+  (eg "FOO.BIN,HELLO.TXT" instead of "FOO     BIN,HELLO   TXT" etc.)
+
+# dosbuild.bat renamed build-win.bat -- it now adds boot block and programs
+  to mikeos.flp using third-party tools
+
+# os_list_dialog rewritten: now shows selected option as a black bar,
+  rather than with ">>>>>" indicator
+
+# MONITOR.BIN updated for new memory map; now runs code ORGed at 36864
+
+# When exiting a program that was launched from the menu-driven app selector,
+  the "Program finished" message now appears in a red bar at the bottom
+
+# Text with bright attributes should no longer blink on the screen
+
+# FILEMAN.BIN now refuses to rename a file to an existing filename
+
+# build-linux.sh script now creates disk_images/mikeos.flp if that
+  file cannot be found
+
+# Added README.TXT to disk/images directory; explains the purpose of each
+  file and how to recreate the floppy disk image
+
+# Removed os_get_int_handler and os_modify_int_handler system calls
+
+# Removed os_execute_program syscall; no longer needed
+
+
+
+2.0.0 (17 October 2008)
+-----------------------
+
+# FAT12 write support implemented (limited to 64K files); includes system
+  calls to create an empty file, save data from RAM to a file, remove a
+  file, rename a file and more -- see source/fat12_write.asm
+
+# New file manager: programs/fileman.asm -- lets you delete and rename
+  files, and get information on the floppy fisk
+
+# Mouse driver from Tomasz Gorol, with system calls in
+  source/os_mouse_syscalls.asm and documentation in the doc/ directory;
+  also MOUSETST.BIN program to demonstrate it
+
+# New system call: os_filename_convert -- takes a normal filename such
+  as 'FOO.BIN' and converts it into the FAT12 equivalent of 'FOO     BIN'
+  (first part padded out with spaces to 8 chars, no full-stop separator)
+
+# New system call: os_list_dialog -- takes a comma-separated and
+  zero-terminated string, and shows options in a list box
+
+# New system call: os_input_dialog -- pops up a small box with
+  a message, and prompts user to enter a string
+
+# New system call: os_string_strincmp, like os_string_compare but
+  limited to the number of characters passed in CL
+
+# os_input_string improved: can now enter and backspace through
+  strings spanning multiple lines
+
+# os_load_file now returns byte count in BX rather than sectors
+
+# Cursor is always restored when leaving os_file_selector
+
+# os_dump_registers now shows SI and DI along with AX, BX, CX, DX
+
+# os_int_to_string fixed -- previously it wouldn't return anything
+  if AX = 0; now it sets string as '0'
+
+# PCXVIEW.BIN refuses to display files without a .PCX extension
+
+# TEST.PCX is now in programs/ and copied to floppy disk when
+  build-linux.sh, build-openbsd.sh or build-osx.sh is run
+
+# os_draw_background doesn't clear screen at start, to cut down on flicker
+
+# At kernel start, don't try to set up a block cursor (it's not useful)
+
+# build-linux.sh now includes a method for blanking FAT12 floppies at the
+  top of the code, in the comments
+
+# In programs/mikedev.inc, os_string_uppercase and os_string_lowercase
+  were marked incorrectly as using SI rather than AX -- fixed
+
+# Added -w+orphan-labels to NASM calls in build-linux.sh, and fixed labels
+  without colons throughout OS and programs
+
+# Un-needed commented-out lines removed from programs/keyboard.asm
+
+# In source/bootload.asm, comments referred to first two bytes of FAT;
+  really means first two clusters -- now fixed
+
+
+
+1.4.2 (20 August 2008)
+----------------------
+
+# Users can now exit the minicom serial terminal program
+  (SERIAL.ASM) by pressing the F8 key
+
+# VOL command added to the CLI: displays volume label and
+  filesystem information for the current floppy disk
+
+# os_check_for_key now returns complete scancode in AX,
+  rather than just the key in AL
+
+# Various small documentation updates
+
+
+
+1.4.1 (20 July 2008)
+--------------------
+
+# New system call: os_dump_registers (displays the contents of
+  AX, BX, CX and DX in hexadecimal format)
+
+# System call vectors added for os_show_cursor and os_hide_cursor,
+  so that they're accessible to user programs
+
+# os_modify_int_handler now clears the interrupt flag on entry,
+  and sets it on exit
+
+# Some labels didn't have colons, triggering warnings with some
+  versions of NASM -- fixed
+
+
+
+1.4.0 (15 July 2008)
+--------------------
+
+# System call for debugging: os_dump_string, shows ASCII text and
+  hexadecimal dump
+
+# New system calls for converting numbers to text: os_print_digit,
+  os_print_1hex, os_print_2hex, os_print_4hex, os_long_int_to_string
+
+# New system calls: os_set_time_fmt and os_set_date_fmt to determine
+  output of os_get_time_string and os_get_date_string respectively
+
+# More system calls: os_get_int_handler, os_print_space, os_long_int_negate
+
+# Bootloader: Buffer now 8K from end of loader, removed unnecessary disk
+  reset calls, simplify FAT cluster calculation, FAT fixes
+
+# File selector now exits on Esc keypress (PCXVIEW.BIN updated accordingly)
+
+# New DOS function, 35h -- get interrupt vector
+
+# Updated FAT code in syscalls.asm as per bootloader fixes
+
+# Minor changes and comments to string functions
+
+# File selector limited to 14 names to avoid overflow down the screen
+
+# os_get_file_list should better handle floppies made on Windows
+
+# os_program_load will fail if program is too large
+
+# os_file_selector now shows cursor when finished
+
+# mikedev.inc's system call list now categorised
+
+# New system variables section in os_main.asm, currently holding
+  settings for time and date formatting
+
+# testzone.asm added in source directory -- a place for trying out quick
+  code snippets, accessible via 'TEST' in the CLI
+
+# LICENSE.TXT moved to doc/ directory
+
+# Lots of small tweaks, comment updates and cosmetic fixes
+
+
+
+1.3.1 (14 May 2008)
+-------------------
+
+# OpenBSD build script added (build-openbsd.sh)
+
+# Simple PSP block moved from start of kernel to
+  os_execute_program routine
+
+# Handbook updates (links to OSes based on MikeOS, code samples
+  updated, Q for Mac OS X link fixed)
+
+# Various cosmetic code and comment cleanups
+
+
+
+1.3.0 (8 April 2008)
+---------------------
+
+# New 'minicom'-like serial terminal program, serial.asm in the
+  programs/ directory (replaces old serial.asm)
+
+# New pcxview.asm program to display 8-bit 320x200 PCX images, plus
+  test.pcx on disk images as a demo
+
+# os_program_load removed: new routine to load file is os_load_file,
+  where AX = filename and CX = location in RAM to load file; returns
+  BX = size of file loaded
+
+# New system call: os_execute_program: runs code located at 100h
+
+# New system call: os_get_cursor_pos -- returns DH = row of cursor
+  and DL = column
+
+# System call vectors at the start of os_main.asm cleaned up: now
+  they are simple jmp instructions rather than call/ret sequences
+
+# The CLI and program selector now refuse to execute MIKEKERN.BIN
+
+# os_file_selector now shows the cursor after a file is chosen
+
+# gfxdemo.asm now displays quit message in top-left corner
+
+# hardlist.asm removed from programs/ directory (and HARDLIST.BIN
+  removed from disk images) -- no real purpose for it
+
+# VLAK.BIN removed from disk image (didn't quit correctly); replaced
+  by STAKAN.BIN Tetris-like game
+
+
+
+1.2.0 (20 January 2008)
+-----------------------
+
+# New monitor.asm program by Yutaka Saiko: enter machine code
+  instructions in hex format, followed by '$'
+
+# Information for new monitor.asm program added to Handbook
+
+# New system call: os_find_char_in_string -- locates and returns
+  the position of a character in a string
+
+# CLI now accepts complete executable names (eg 'hello.bin')
+  and not only short names ('hello')
+
+# doserror.asm removed from the programs/ directory
+
+# Handbook fixes
+
+
+
+1.1.1 (12 December 2007)
+------------------------
+
+# Mac OS X build script fixed
+
+# Project now hosted on BerliOS at http://mikeos.berlios.de
+
+# Handbook fixes
+
+
+
+1.1.0 (8 December 2007)
+-----------------------
+
+# MikeOS API version incremented to 2
+
+# New serial port support for native MikeOS programs (Ian Seyler);
+  os_send_via_serial and os_get_via_serial system calls, plus a
+  demo program (serial.asm)
+
+# New system call: os_get_date_string (Ian Seyler): returns
+  a string like '12/31/2007'
+
+# CLI updated with new 'TIME' and 'DATE' commands (Ian Seyler)
+
+# dosbuild.bat updated (Ian Seyler)
+
+# build-osx.sh script for OS X users added (Michael van Tellingen)
+
+# New Handbook information on building on Windows and Mac OS X
+
+# New Handbook section on the serial port
+
+# Handbook tweaks: mini TOC in 'Making an OS' section; new
+  'Go further' links section; close <li> tags; 'Using MikeOS'
+  section now linked in left-hand bar; FAQ on 16-bit/asm
+
+
+
+1.0.0 (16 September 2007)
+-------------------------
+
+# Restructured directory layout: bootloader (renamed bootload.asm)
+  and kernel now both in 'source' directory; new 'doc' directory
+
+# 'build' and 'make_disks' scripts merged into a single script
+  called 'build-linux.sh'; BUILD.BAT renamed DOSBUILD.BAT
+
+# New os_file_selector: pops up a dialog box for selecting a file;
+  result is a zero-terminated 11-char string pointed to by AX
+
+# New system call: os_string_truncate -- cuts string down to specified
+  number of characters from start
+
+# New system call: os_bcd_to_int -- converts binary coded decimal
+  numbers into integers
+
+# New system call: os_get_time_string -- generates a string with
+  the current time (eg '20:41')
+
+# os_string_chomp now strips leading spaces as well as trailing
+
+# os_print_blank_line renamed to os_print_newline
+
+# os_int_to_string updated -- now based on a public domain routine
+  that handles full 16-bit registers
+
+# CLI now strips spaces with os_string_chomp before checking for blank
+  lines -- stops it complaining that ' ' (space) is not a valid program
+
+# os_string_strip and show_files now use os_buffer as a temporary store,
+  rather than their own strings (reduces kernel size by 512 bytes)
+
+# os_input_string fixed so that backspaced chars are zeroed-out
+
+# os_int_reboot internal call added, which reboots the machine
+  via the keyboard controller
+
+# Removed 'API version' from start of os_main.asm; kernel code now
+  starts at 8000h (bootloader updated accordingly)
+
+# Added os_get_api_version which returns the current API version,
+  as defined at the top of os_main.asm, in AL
+
+# Removed CLI_VER from os_cli.asm -- it's not going to be updated
+  outside of MikeOS so a single global version number is simpler
+
+# Changed 'REBOOT' to 'EXIT' in os_cli.asm -- now it doesn't
+  reboot but exits cleanly with a 'ret'
+
+# CREDITS.TXT added to list people involved in the project
+
+
+
+0.40 (16th January 2007)
+------------------------
+
+CHANGES BY PETER NEMETH:
+
+# os_syscalls.asm renamed to syscalls.asm, to support the DOS 8.3
+  filename character format (NASM could not find certain files)
+
+# BUILD.BAT added for DOS users
+
+# Divide by zero handling (int 0h) added
+
+# Drive descriptor fixed in bootsector and some features added;
+  now it will not hang the system if there is a boot failure
+
+# Before loading a DOS program, save and clean up registers
+
+# DOS exit call fixed: does not restart the OS, and programs
+  can exit with error codes
+
+# DOS 'get date' interrupt added; now returns the current date
+
+# Some rets replaced with irets
+
+# DOS Ctrl+Break handler added; not yet working (IRQ 9 doesn't
+  call int 1Bh)
+
+# DOS print character via printer added
+
+# Some helper routines added for DOS
+
+# DOS CP/M compatible routines added
+
+# DOS reset disk added
+
+# DOS set/get current drive added
+
+# DOS set date function added
+
+# DOS set/get time function added
+
+# DOS functions sorted by function number
+
+# DOS unimplemented interrupt call fixed; now only exits from
+  program and display message, not restart OS
+
+# DOS serial port and modem support interrupt added;
+  read and write from STDAUX (COM1)
+
+# DOS interrupt flush buffer and read fixed; now really flush the
+  buffer before read
+
+
+CHANGES BY MIKE SAUNDERS:
+
+# gfxdemo.asm fixed to quit properly
+
+# DOS set vector routine added
+
+# Added mini Program Segment Prefix block to os_app_data in
+  os_main.asm -- needs to be done properly, but VisiCalc
+  now starts up
+
+
+
+0.30 (12th November 2006)
+-------------------------
+
+# New command line interface mode, currently featuring DIR, HELP,
+  CLS, PROMPT, VER and EXIT inbuilt commands
+
+# os_alert_dialog renamed os_dialog_box due to new feature: multiple
+  button support. If DX = 1 when called, it presents two buttons
+  (OK and Cancel) with the selection returned in AX
+
+# New system call: os_string_compare -- takes two strings and sets
+  the carry flag if they're the same
+
+# New system call: os_string_chomp -- removes trailing spaces
+  at the end of a string
+
+# New system call: os_string_strip -- removes character specified
+  in AX from the string in SI
+
+# Kernel source split into multiple files for easier editing, based
+  around os_main.asm which includes the rest. These kernel files
+  are now in kernel/, with the bootloader in bootloader/
+
+# os_program_load now sets carry flag if program not found, instead
+  of bailing out to os_fatal_error, and also returns from a call
+
+# os_program_load can clear the screen before loading a program if
+  BX = 1. Useful for the file selector dialog
+
+# Changed os_pause to use BIOS call
+
+# Fixed zero-termination bug in os_string_copy
+
+# MikeOS programs that include mikedev.inc can now access the
+  8K scratchpad buffer via os_buffer
+
+# Moved DOSTEST.ASM, for testing DOS compatibility, into the
+  programs/ directory (so that it's automatically built)
+
+# Bootloader now has error messages, rather than just freezing
+
+# Split up the assemble and disk-image scripts to avoid loopback
+  mounting errors, and simplify editing
+
+# Various small cleanups and fixes
+
+
+
+0.25 (27th October 2006)
+------------------------
+
+# New system call: os_modify_int_handler
+
+# Removed DOS compatibility interrupt handlers from bootloader,
+  replaced with code in kernel using os_modify_int_handler
+
+# System call for os_get_file_list routine added
+
+# Music keyboard demo app no longer uses 100% CPU
+
+
+
+0.24 (25th October 2006)
+------------------------
+
+# Released on SourceForge
+
+
+==================================================================
+
