@@ -26,6 +26,21 @@
 
 
 start:
+	mov ax, warnmsg_1
+	mov bx, warnmsg_2
+	mov cx, 0
+	mov dx, 1
+	call os_dialog_box
+	cmp ax, 0
+	je .proceed
+
+	call os_clear_screen
+	ret
+
+
+.proceed:
+	call os_clear_screen
+
 	mov ax, 0			; 9600 baud mode
 	call os_serial_port_enable
 
@@ -171,6 +186,8 @@ erase_sub:
 	ret
 
 
+	warnmsg_1	db 'Serial terminal program -- may lock up', 0
+	warnmsg_2	db 'if you have no serial ports! Proceed?', 0
 
 	start_msg	db 'MikeOS minicom -- Press F8 to quit', 13, 10, 'Connecting via serial at 9600 baud...', 13, 10, 13, 10, 0
 	finish_msg	db 13, 10, 13, 10, 'Exiting MikeOS minicom; press a key to return to MikeOS', 13, 10, 0

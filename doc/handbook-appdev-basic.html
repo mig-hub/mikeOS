@@ -81,37 +81,53 @@ li {
 <li><a href="#example">Example</a></li>
 <li><a href="#assignment">Assignment</a></li>
 <li><a href="#memory">Memory</a></li>
+<li><a href="#keywords">Keywords</a></li>
 <li><a href="#theeditor">The editor</a></li>
 </ul>
 
 <p><strong>Instructions</strong></p>
 <ul>
 <li><a href="#alert">ALERT</a></li>
+<li><a href="#askfile">ASKFILE</a></li>
 <li><a href="#call">CALL</a></li>
 <li><a href="#cls">CLS</a></li>
 <li><a href="#cursor">CURSOR</a></li>
 <li><a href="#curschar">CURSCHAR</a></li>
+<li><a href="#curscol">CURSCOL</a></li>
+<li><a href="#curspos">CURSPOS</a></li>
+<li><a href="#delete">DELETE</a></li>
+<li><a href="#do">DO</a></li>
 <li><a href="#end">END</a></li>
 <li><a href="#for">FOR</a></li>
 <li><a href="#getkey">GETKEY</a></li>
 <li><a href="#gosub">GOSUB</a></li>
 <li><a href="#goto">GOTO</a></li>
 <li><a href="#if">IF</a></li>
+<li><a href="#include">INCLUDE</a></li>
+<li><a href="#ink">INK</a></li>
 <li><a href="#input">INPUT</a></li>
+<li><a href="#len">LEN</a></li>
+<li><a href="#listbox">LISTBOX</a></li>
 <li><a href="#load">LOAD</a></li>
 <li><a href="#move">MOVE</a></li>
 <li><a href="#next">NEXT</a></li>
+<li><a href="#number">NUMBER</a></li>
+<li><a href="#page">PAGE</a></li>
 <li><a href="#pause">PAUSE</a></li>
 <li><a href="#peek">PEEK</a></li>
 <li><a href="#poke">POKE</a></li>
 <li><a href="#port">PORT</a></li>
 <li><a href="#print">PRINT</a></li>
 <li><a href="#rand">RAND</a></li>
+<li><a href="#read">READ</a></li>
 <li><a href="#rem">REM</a></li>
+<li><a href="#rename">RENAME</a></li>
 <li><a href="#return">RETURN</a></li>
 <li><a href="#save">SAVE</a></li>
 <li><a href="#serial">SERIAL</a></li>
+<li><a href="#size">SIZE</a></li>
 <li><a href="#sound">SOUND</a></li>
+<li><a href="#string">STRING</a></li>
 <li><a href="#waitkey">WAITKEY</a></li>
 </ul>
 
@@ -140,7 +156,7 @@ li {
 
 <h1>The MikeOS BASIC App Developer Handbook</h1>
 
-<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+<h3>For version 4.3, 24 February 2012 - (C) MikeOS Developers</h3>
 
 <p>This documentation file explains how to write software for MikeOS using the BASIC interpreter
 built into the operating system. If you have any questions, see <a href="http://mikeos.berlios.de">the MikeOS website</a>
@@ -180,6 +196,8 @@ For instance, <strong>X = &amp; $1</strong> places the memory location of the $1
 <p><strong>GOSUB</strong> calls can be nested up to ten times. <strong>FOR</strong> loops can be nested using different variables (eg you
 can have a <strong>FOR X = 1 TO 10 ... NEXT X</strong> loop surrounding a <strong>FOR Y = 30 TO 50</strong> loop). You can enter code in uppercase or lowercase -- the interpreter doesn't mind either way. However, labels are case-sensitive.</p>
 
+<p>If a MikeOS BASIC program is run from the command line, and one or more parameters was provided with the command,
+they are copied into the $1 string when the program starts.</p>
 
 
 <br />
@@ -284,7 +302,7 @@ at a time from left to right. For string variables:</p>
 
 <pre>
 $1 = "Hello"
-$1 = $2
+$2 = $1
 </pre>
 
 <p>You can get the location of a string variable to use as an array:</p>
@@ -330,6 +348,33 @@ You can LOAD and SAVE files in here, PEEK and POKE around, and do what you want 
 
 
 
+<br />
+
+
+<a name="keywords"></a>
+<h3>Keywords</h3>
+
+
+<p>You can do this to get the MikeOS API version number:</p>
+
+<pre>
+x = VERSION
+</pre>
+
+<p>Or you can retrieve the lower word of the system clock like this:</p>
+
+<pre>
+x = TIMER
+</pre>
+
+<p>To get the current ink colour, use:</p>
+
+<pre>
+x = INK
+</pre>
+
+
+
 
 <br />
 
@@ -372,6 +417,21 @@ but note that only Delete can be used to remove newlines.</p>
 
 <pre>
 alert "File saved correctly."
+
+$1 = "Welcome to my program"
+alert $1
+</pre>
+
+
+
+<br />
+
+<a name="askfile"></a>
+<h3>ASKFILE</h3>
+<p>Show a dialog box on the screen with a string with a list of files on the disk, and store the selected file in the specified variable. Example:</p>
+
+<pre>
+askfile $1
 </pre>
 
 
@@ -444,6 +504,63 @@ curschar x
 
 rem *** The next command will print 'e' ***
 print chr x
+</pre>
+
+
+
+
+<br />
+
+<a name="curschar"></a>
+<h3>CURSCOL</h3>
+<p>Get the colour of the character under the cursor. Example:</p>
+
+<pre>
+move 20 15
+curscol x
+</pre>
+
+
+
+
+<br />
+
+<a name="curspos"></a>
+<h3>CURSPOS</h3>
+<p>Get the position of the cursor. Example:</p>
+
+<pre>
+rem *** First is column, then row ***
+curspos a b
+</pre>
+
+
+
+
+<br />
+
+<a name="delete"></a>
+<h3>DELETE</h3>
+<p>Removes a file from the disk. Returns 0 in the R variable if the operation was a success, 1 if the delete
+operation couldn't be completed, or 2 if the file doesn't exist. Example:</p>
+
+<pre>
+delete "myfile.txt"
+</pre>
+
+
+
+
+<br />
+
+<a name="do"></a>
+<h3>DO</h3>
+<p>Perform a loop until a condition is met (UNTIL or WHILE). You can also set up an infinite loop with LOOP ENDLESS at the end. Example:</p>
+
+<pre>
+do
+  rem *** Code goes here ***
+loop until x = 10
 </pre>
 
 
@@ -544,7 +661,7 @@ print "And now we're back home"
 
 <a name="if"></a>
 <h3>IF</h3>
-<p>Executes a command depending on a condition. After stating the condition (eg whether one number
+<p>Executes a command depending on a condition (or multiple conditions with AND). After stating the condition (eg whether one number
 is bigger than another, or whether two strings match) you must use THEN and follow with another
 instruction. Examples:</p>
 
@@ -581,6 +698,36 @@ if $1 = $2 then gosub stringsmatch
 
 <br />
 
+<a name="include"></a>
+<h3>INCLUDE</h3>
+<p>Appends another BASIC file onto the end of the current one, so that you can call routines in it. RAMSTART
+is updated accordingly. Example:</p>
+
+<pre>
+include "mbpp.bas"
+</pre>
+
+
+
+
+
+<br />
+
+<a name="ink"></a>
+<h3>INK</h3>
+<p>Changes the colour of printed text, using a number or variable. Example:</p>
+
+<pre>
+ink 2
+print "This text is green"
+</pre>
+
+
+
+
+
+<br />
+
 <a name="input"></a>
 <h3>INPUT</h3>
 <p>Gets input from the user and stores the result into a numeric or string variable. Examples:</p>
@@ -588,6 +735,47 @@ if $1 = $2 then gosub stringsmatch
 <pre>
 input x
 input $1
+</pre>
+
+
+
+
+<br />
+
+<a name="len"></a>
+<h3>LEN</h3>
+<p>Stores the length of a string variable in a numeric variable. Example:</p>
+
+<pre>
+$1 = "Hello world"
+len $1 x
+</pre>
+
+
+
+
+<br />
+
+<a name="listbox"></a>
+<h3>LISTBOX</h3>
+<p>Displays an dialog box containing a list of options, specified by a comma-separated list in the first string. The second
+and third strings provide help text, and the chosen option (from 1) is stored in the specified variable (or if the Esc
+key is pressed). Example:</p>
+
+<pre>
+cls
+
+$1 = "Hex dumper,MikeTron"
+$2 = "Choose a program to run,"
+$3 = "Or press Esc to exit"
+
+listbox $1 $2 $3 a
+
+if a = 1 then goto runhex
+if a = 2 then goto runmiketron
+
+rem *** The following will be executed if Esc was pressed ***
+end
 </pre>
 
 
@@ -666,6 +854,23 @@ next x
 
 <br />
 
+<a name="number"></a>
+<h3>NUMBER</h3>
+<p>Converts strings to numbers and vice versa. Examples:</p>
+
+<pre>
+number $1 a
+</pre>
+
+<pre>
+number a $1
+</pre>
+
+
+
+
+<br />
+
 <a name="pause"></a>
 <h3>PAUSE</h3>
 <p>Delays execution of the program by the specified 10ths of a second. This ultimately results in a BIOS
@@ -678,6 +883,19 @@ pause 30
 print "Hey, and one more, this time with a variable..."
 x = 10
 pause x
+</pre>
+
+
+
+
+<br />
+
+<a name="page"></a>
+<h3>PAGE</h3>
+<p>Switch between working and active (display) pages. Example:</p>
+
+<pre>
+page 1 0
 </pre>
 
 
@@ -700,6 +918,7 @@ x = 32768
 peek a x
 </pre>
 
+<p><strong>Note:</strong> you can use PEEKINT to work with words instead of bytes (up to 65536).</p>
 
 
 
@@ -719,7 +938,7 @@ y = 40000
 poke x y
 </pre>
 
-
+<p><strong>Note:</strong> you can use POKEINT to work with words instead of bytes (up to 65536).</p>
 
 
 
@@ -795,12 +1014,59 @@ rand x 50 2000
 
 <br />
 
+<a name="read"></a>
+<h3>READ</h3>
+<p>Read data bytes from a label, first specifying the offset and a variable into which to read. For instance,
+in the following example we read a small program and poke it into memory locations 50000 to 50012. We then
+call that location to run the program:</p>
+
+<pre>
+y = 1
+
+for x = 50000 to 50012
+  read mydata y a
+  poke a x
+  y = y + 1
+next x
+
+call 50000
+
+waitkey x
+end
+
+mydata:
+190 87 195 232 173 60 195 89 111 33 13 10 0
+</pre>
+
+
+
+
+
+<br />
+
 <a name="rem"></a>
 <h3>REM</h3>
 <p>A remark -- ie a comment that the BASIC interpreter ignores. Example:</p>
 
 <pre>
 rem *** This routine calculates the cuteness of kittens ***
+</pre>
+
+
+
+
+
+<br />
+
+<a name="rename"></a>
+<h3>RENAME</h3>
+<p>Renames one file to another. Literal strings and string variables are allowed. Afterwards, R contains 0 if the
+operation was a success, 1 if the file was not found, 2 if the write operation failed, or 3 if the target file
+already exists. Example:</p>
+
+<pre>
+$1 = "myfile.dat"
+rename "oldfile.txt" $1
 </pre>
 
 
@@ -828,8 +1094,8 @@ return
 <h3>SAVE</h3>
 <p>Saves data from memory to a file on the disk. The first parameter is the filename, the second
 the location in RAM where the data starts, and the third the number (in bytes) the amount of data to save. After
-execution, the R variable contains 1 if the file save operation failed (eg if the file already exists or it's
-a write-only medium), or 0 if it was successful. Examples:</p>
+execution, the R variable contains 1 if the file save operation failed (eg if it's
+a write-only medium), 2 if the file already exists, or 0 if it was successful. Examples:</p>
 
 <pre>
 save "myfile.txt" 40000 256
@@ -878,6 +1144,21 @@ serial rec x
 
 <br />
 
+<a name="size"></a>
+<h3>SIZE</h3>
+<p>Stores the size of the specified file in the S variable and sets R to 0, or sets R to 1 if the
+file doesn't exist. Example:</p>
+
+<pre>
+size "kernel.bin"
+print s
+</pre>
+
+
+
+
+<br />
+
 <a name="sound"></a>
 <h3>SOUND</h3>
 <p>Generate a note from the PC speaker at the specified frequency, for the specified length of time
@@ -889,6 +1170,27 @@ sound 4000 20
 </pre>
 
 <p><strong>Note:</strong> some quick frequencies. 4000 = C. 3600 = D. 3200 = E. 3000 = F. 2700 = G. 2400 = A. 2100 = B.</p>
+
+
+
+<br />
+
+<a name="string"></a>
+<h3>STRING</h3>
+<p>Get or set bytes in a string variable, specified by an offset. Examples:</p>
+
+<pre>
+$1 = "Hello world"
+
+rem *** 121 = ASCII for "y" character ***
+b = 121
+
+string set $1 5 b
+
+rem *** Now $1 contains "Helly world" ***
+print $1
+</pre>
+
 
 
 

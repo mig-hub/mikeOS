@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; FAT12 FLOPPY DISK ROUTINES
 ; ==================================================================
@@ -57,7 +57,7 @@ os_get_file_list:
 	cmp al, 0Fh			; Windows marker, skip it
 	je .skip
 
-	test al, 10h			; Is this a directory entry?
+	test al, 18h			; Is this a directory entry or volume label?
 	jnz .skip			; Yes, ignore it
 
 	mov al, [si]
@@ -210,7 +210,7 @@ os_load_file:
 	cmp al, 0Fh			; Is this a special Windows entry?
 	je .next_root_entry
 
-	test al, 10h			; Is this a directory entry?
+	test al, 18h			; Is this a directory entry or volume label?
 	jnz .next_root_entry
 
 	mov byte [di+11], 0		; Add a terminator to directory name entry
@@ -375,9 +375,10 @@ os_write_file:
 	pusha
 
 	mov di, .free_clusters
-	mov cx, 127
+	mov cx, 128
 .clean_free_loop:
-	mov byte [di], 0
+	mov word [di], 0
+	inc di
 	inc di
 	loop .clean_free_loop
 
@@ -660,7 +661,7 @@ os_file_exists:
 	je .failure
 	pop ax
 
-push ax
+	push ax
 	call disk_read_root_dir
 
 	pop ax				; Restore filename
@@ -766,6 +767,7 @@ os_create_file:
 ; IN: AX = location of filename to remove
 
 os_remove_file:
+	pusha
 	call os_string_uppercase
 	call int_filename_convert	; Make filename FAT12-style
 	push ax				; Save filename
@@ -852,9 +854,12 @@ os_remove_file:
 	jc .failure
 
 .nothing_to_do:
+	popa
+	clc
 	ret
 
 .failure:
+	popa
 	stc
 	ret
 
@@ -900,6 +905,7 @@ os_rename_file:
 	call disk_write_root_dir	; Save root dir to disk
 	jc .fail_write
 
+	clc
 	ret
 
 .fail_read:
@@ -1261,7 +1267,9 @@ disk_reset_floppy:
 	push ax
 	push dx
 	mov ax, 0
-	mov dl, 0
+; ******************************************************************
+	mov dl, [bootdev]
+; ******************************************************************
 	stc
 	int 13h
 	pop dx
@@ -1295,13 +1303,18 @@ disk_convert_l2hts:
 	pop ax
 	pop bx
 
-	mov dl, byte 0			; Set correct device
+; ******************************************************************
+	mov dl, [bootdev]		; Set correct device
+; ******************************************************************
 
 	ret
 
 
 	Sides dw 2
 	SecsPerTrack dw 18
+; ******************************************************************
+	bootdev db 0			; Boot device number
+; ******************************************************************
 
 
 ; ==================================================================

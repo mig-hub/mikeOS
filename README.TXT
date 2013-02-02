@@ -1,6 +1,6 @@
 ==================================================================
 MikeOS -- Open source 16-bit operating system for x86 PCs
-Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ==================================================================
 
 
@@ -15,13 +15,14 @@ MikeOS is a learning tool for those wishing to understand simple OS
 construction and x86 assembly. Quick getting-started guide: MikeOS can 
 run from a floppy disk or CD-ROM, either on an emulator or a real PC. 
 See the disk_images/ directory for files that you can write to the 
-approprate media or boot in, for instance, VMware, QEMU or VirtualBox.
+appropriate media or boot in, for instance, VMware, QEMU or VirtualBox.
 
 You can find the source code in the source/ directory, and sample 
 programs (included on the disk images) in the programs/ directory.
 See the doc/ directory for more info, including:
 
  # handbook-user.html -- How to run and use MikeOS
+
  # handbook-appdev-basic.html -- Writing software in BASIC
  # handbook-appdev-asm.html -- Writing software in assembly
  # handbook-sysdev.html -- Building and modifying the OS

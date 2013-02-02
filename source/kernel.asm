@@ -1,18 +1,18 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ;
-; This is loaded from the floppy/CD, by BOOTLOAD.BIN, as KERNEL.BIN.
+; This is loaded from the drive by BOOTLOAD.BIN, as KERNEL.BIN.
 ; First we have the system call vectors, which start at a static point
-; for programs to jump to. Following that is the main kernel code and
+; for programs to use. Following that is the main kernel code and
 ; then additional system call code is included.
 ; ==================================================================
 
 
 	BITS 16
 
-	%DEFINE MIKEOS_VER '4.1'	; OS version number
-	%DEFINE MIKEOS_API_VER 13	; API version for programs to check
+	%DEFINE MIKEOS_VER '4.3.1'	; OS version number
+	%DEFINE MIKEOS_API_VER 15	; API version for programs to check
 
 
 	; This is the location in RAM for kernel disk operations, 24K
@@ -60,7 +60,7 @@ os_call_vectors:
 	jmp os_string_strip		; 004Bh
 	jmp os_string_truncate		; 004Eh
 	jmp os_bcd_to_int		; 0051h
-	jmp os_get_time_string		; 0055h
+	jmp os_get_time_string		; 0054h
 	jmp os_get_api_version		; 0057h
 	jmp os_file_selector		; 005Ah
 	jmp os_get_date_string		; 005Dh
@@ -101,6 +101,7 @@ os_call_vectors:
 	jmp os_run_basic		; 00C6h
 	jmp os_port_byte_out		; 00C9h
 	jmp os_port_byte_in		; 00CCh
+	jmp os_string_tokenize		; 00CFh
 
 
 ; ------------------------------------------------------------------
@@ -118,10 +119,24 @@ os_main:
 
 	mov ax, 2000h			; Set all segments to match where kernel is loaded
 	mov ds, ax			; After this, we don't need to bother with
-	mov es, ax			; segments ever again!
-	mov fs, ax
+	mov es, ax			; segments ever again, as MikeOS and its programs
+	mov fs, ax			; live entirely in 64K
 	mov gs, ax
 
+	cmp dl, 0
+	je no_change
+	mov [bootdev], dl		; Save boot device number
+	push es
+	mov ah, 8			; Get drive parameters
+	int 13h
+	pop es
+	and cx, 3Fh			; Maximum sector number
+	mov [SecsPerTrack], cx		; Sector numbers start at 1
+	movzx dx, dh			; Maximum head number
+	add dx, 1			; Head numbers start at 0 - add 1 for total
+	mov [Sides], dx
+
+no_change:
 	mov ax, 1003h			; Set text output with certain attributes
 	mov bx, 0			; to be bright, and not blinking
 	int 10h
@@ -129,7 +144,7 @@ os_main:
 	call os_seed_random		; Seed random number generator
 
 
-	; First up, let's see if there's a file called AUTORUN.BIN and execute
+	; Let's see if there's a file called AUTORUN.BIN and execute
 	; it if so, before going to the program launcher menu
 
 	mov ax, autorun_bin_file_name
@@ -141,12 +156,12 @@ os_main:
 	jmp execute_bin_program		; ...and move on to the executing part
 
 
-	; Perhaps there's an AUTORUN.BAS however?
+	; Or perhaps there's an AUTORUN.BAS file?
 
 no_autorun_bin:
 	mov ax, autorun_bas_file_name
 	call os_file_exists
-	jc option_screen		; Skip next five lines if AUTORUN.BAS doesn't exist
+	jc option_screen		; Skip next section if AUTORUN.BAS doesn't exist
 
 	mov cx, 32768			; Otherwise load the program into RAM
 	call os_load_file
@@ -298,6 +313,7 @@ not_bin_extension:
 	call os_clear_screen		; Clear screen before running
 
 	mov ax, 32768
+	mov si, 0			; No params to pass
 	call os_run_basic		; And run our BASIC interpreter on the code!
 
 	mov si, basic_finished_msg
@@ -358,7 +374,6 @@ not_bas_extension:
 
 
 	%INCLUDE "features/cli.asm"
-	%INCLUDE "features/basic.asm"
  	%INCLUDE "features/disk.asm"
 	%INCLUDE "features/keyboard.asm"
 	%INCLUDE "features/math.asm"
@@ -367,6 +382,7 @@ not_bas_extension:
 	%INCLUDE "features/screen.asm"
 	%INCLUDE "features/sound.asm"
 	%INCLUDE "features/string.asm"
+	%INCLUDE "features/basic.asm"
 
 
 ; ==================================================================

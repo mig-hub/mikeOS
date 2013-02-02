@@ -31,16 +31,14 @@ main_start:
 	rep cmpsb			; Does the extension contain 'TXT'?
 	je near valid_txt_extension	; Skip ahead if so
 
+	dec di
 
-	mov di, bx			; Get filename back again
-
-	mov ax, bx
-	call os_string_length
-	add di, ax			; DI now points to last char in filename
+	mov si, bas_extension
+	mov cx, 3
+	rep cmpsb			; Does the extension contain 'BAS'?
+	je near valid_txt_extension	; Skip ahead if so
 
 	dec di
-	dec di
-	dec di				; ...and now to first char of extension!
 
 	mov si, pcx_extension
 	mov cx, 3
@@ -252,12 +250,13 @@ close:
 
 
 	txt_extension	db 'TXT', 0
+	bas_extension	db 'BAS', 0
 	pcx_extension	db 'PCX', 0
 
-	err_string	db 'Please select a .TXT or .PCX file!', 0
+	err_string	db 'Please select a TXT, BAS or PCX file!', 0
 
 	title_msg	db 'MikeOS File Viewer', 0
-	footer_msg	db 'Select a .TXT or .PCX file to view, or press Esc to exit', 0
+	footer_msg	db 'Select a TXT, BAS or PCX file to view, or press Esc to exit', 0
 
 	txt_title_msg	db 'MikeOS Text File Viewer', 0
 	txt_footer_msg	db 'Use arrow keys to scroll and Q to quit', 0

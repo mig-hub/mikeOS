@@ -1,7 +1,183 @@
 ==================================================================
 MikeOS -- Open source 16-bit operating system for x86 PCs
-Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ==================================================================
+
+
+4.3.1 (28 April 2012)
+---------------------
+
+# Updated to latest version of ASCII Artist (draw.bas)
+
+# Updated to latest version of MikeBASIC++ (mbpp.bas)
+
+# source/features/basic.asm fixes from Joshua Beck
+
+
+
+4.3 (24 February 2012)
+----------------------
+
+# New game: MUNCHER.BAS, an apple-eating action game
+
+# New game: ADVNTURE.BAS, a text adventure
+
+# Updated to latest versions of MEMEDIT, CALC and DRAW
+
+# MikeBASIC++ (MBPP.BAS) library included on the disk
+
+# BASIC: DO + LOOP UNTIL/WHILE/ENDLESS loops implemented
+
+# BASIC: New STRING command to get or set bytes at locations in a string
+
+# BASIC: New PEEKINT and POKEINT commands
+
+# BASIC: INK keyword added to get current colour
+
+# BASIC: FOR/NEXT loops now accept variables (eg "FOR X = Y TO Z")
+
+# BASIC: PRINT no longer scrolls if followed by semi colon on last line
+  (with the exception of HEX)
+
+# BASIC: NUMBER added, to convert between strings and integers
+
+# BASIC: RENAME and SIZE commands added
+
+# BASIC: ASKFILE command, which shows the file selector
+
+# BASIC: Sums now check for division by zero and break with an error
+
+# BASIC: ALERT command can now take a string variable
+
+# BASIC: LISTBOX added -- shows list dialog box where first string
+  is "Foo,Bar,Baz" and second and third are help
+
+# BASIC: INCLUDE added, to append another BAS file onto the end of the
+  current one and call routines in it
+
+# BASIC: CURSPOS added, to get cursor position
+
+# BASIC: CURSCOL added, to get colour of character under the cursor
+
+# BASIC: Can use var = TIMER to get lower word value of system clock
+
+# BASIC: PAGE added to switch between working and active (display) pages
+
+# BASIC: LEN added to get length of string
+
+# BASIC: DELETE added to delete files
+
+# BASIC: READ added to read data from label
+
+# BASIC: INK command added for printing strings
+
+# BASIC: AND added to IF
+
+# BASIC: ALERT, ASKFILE and LISTBOX preserve cursor location
+
+# BASIC: Added VERSION keyword to get the API version
+
+# BASIC: SAVE returns 2 in R variable if file exists
+
+# USB drive floppy disk emulation updates from Mike Gonta
+
+# VIEWER can now read BAS files
+
+# SERIAL now clears screen after initial dialog box
+
+# HANGMAN now limits input to "a" to "z" keys (and Esc)
+
+# Fix CLI bug (eg running COPY internal command even if user had intended
+  to run a program called COPYMEGA.BIN)
+
+# MIKETRON.BAS removed (code included in EXAMPLE.BAS)
+
+# Bump API to version 15
+
+
+
+4.2 (30 September 2011)
+-----------------------
+
+# New program: Memory Manipulator (MEMEDIT.BAS) from Joshua Beck: a
+  colourful program for editing bytes in memory, written in BASIC
+
+# New program: ASCII Artist (DRAW.BAS) from Joshua Beck: lets you draw,
+  load and save images created with ASCII characters
+
+# New program: MikeTron Reloaded (MIKETRON.BAS) from Joshua Beck: new
+  features, bonuses and explosion effects
+
+# New program: Calculator (CALC.BAS) from Joshua Beck
+
+# CLI has new file management operations to complement FILEMAN program:
+  COPY, REN, DEL and SIZE
+
+# EDIT now supports the facility to make a new file with the F3 key
+
+# EDIT can take an existing file as a parameter at the command line:
+  eg "edit myfile.txt"
+
+# EDIT will no longer let you run BASIC on an empty file
+
+# CLI supports argument passing: program receives the string of parameters
+  in SI, or SI = 0 if no parameters are specified
+
+# os_run_basic now takes a parameter string in SI and copies it into the
+  first BASIC string ($1), unless SI = 0
+
+# New system call: os_string_tokenize from Matej Horvat -- reads tokens
+  separated by a specified character from a string
+
+# os_file_remove now restores all registers to previous state after use
+
+# SERIAL program offers to quit out before activating serial ports
+
+# TEST.PCX updated and renamed to SAMPLE.PCX
+
+# Bugfix: os_get_time_string vector is 0054h, not 0055h
+
+# Reordered code inclusion: source/features/basic.asm is now last in kernel
+
+# Bump API to version 14
+
+
+
+4.1.2 (18 July 2011)
+--------------------
+
+# Added "-O0" (no-optimisation) option to all NASM calls in the build
+  scripts; newer versions of NASM use optimisation by default, which
+  we don't want
+
+
+
+4.1.1 (20 January 2011)
+-----------------------
+
+# source/features/screen.asm: os_list_dialog now scrollable for more
+  entries than can fit into the dialog box
+
+# source/features/cli.asm: dirlist expanded from 255 to 1024 bytes
+
+# source/features/screen.asm: os_file_selector: buffer expanded to
+  1024 bytes
+
+# Build scripts now copy all .bas files in programs/ to the floppy
+  disk image (and not just example.bas)
+
+# source/features/misc.asm: os_pause rewritten by Paulo Valongo to work
+  with more BIOSes; now takes 110ms chunks in AX
+
+# source/features/disk.asm fixes from Mike Gonta: os_get_file_list now
+  checks for directory entries AND volume label; os_write_file routine
+  now properly zeroes out the .free_clusters list
+
+# source/features/keyboard.asm: os_check_for_key now returns 0 in AX
+  (and not just AL) when there's no key, as per the API docs
+
+# Documentation and comment fixes
+
 
 
 4.1 (17 January 2010)
@@ -39,7 +215,7 @@ Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
 # BASIC CURSORCHAR command is now CURSCHAR, so that it doesn't
   look like a superset of the CURSOR command
 
-# API bumped to version 13
+# API version bumped to 13
 
 # Handbook updates and fixes
 

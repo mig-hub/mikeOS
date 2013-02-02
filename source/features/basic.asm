@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; BASIC CODE INTERPRETER
 ; ==================================================================
@@ -19,7 +19,8 @@
 
 
 ; ------------------------------------------------------------------
-; The BASIC intepreter execution starts here...
+; The BASIC interpreter execution starts here -- a parameter string
+; is passed in SI and copied into the first string, unless SI = 0
 
 os_run_basic:
 	mov word [orig_stack], sp		; Save stack pointer -- we might jump to the
@@ -39,6 +40,12 @@ os_run_basic:
 
 	call clear_ram				; Clear variables etc. from previous run
 						; of a BASIC program
+
+	cmp si, 0				; Passed a parameter string?
+	je mainloop
+
+	mov di, string_vars			; If so, copy it into $1
+	call os_string_copy
 
 
 
@@ -68,6 +75,10 @@ mainloop:
 	call os_string_compare
 	jc near do_alert
 
+	mov di, askfile_cmd
+	call os_string_compare
+	jc near do_askfile
+
 	mov di, call_cmd
 	call os_string_compare
 	jc near do_call
@@ -83,6 +94,22 @@ mainloop:
 	mov di, curschar_cmd
 	call os_string_compare
 	jc near do_curschar
+
+	mov di, curscol_cmd
+	call os_string_compare
+	jc near do_curscol
+
+	mov di, curspos_cmd
+	call os_string_compare
+	jc near do_curspos
+	
+	mov di, delete_cmd
+	call os_string_compare
+	jc near do_delete
+	
+	mov di, do_cmd
+	call os_string_compare
+	jc near do_do
 
 	mov di, end_cmd
 	call os_string_compare
@@ -104,17 +131,37 @@ mainloop:
 	call os_string_compare
 	jc near do_goto
 
-	mov di, input_cmd
-	call os_string_compare
-	jc near do_input
-
 	mov di, if_cmd
 	call os_string_compare
 	jc near do_if
 
+	mov di, include_cmd
+	call os_string_compare
+	jc near do_include
+
+	mov di, ink_cmd
+	call os_string_compare
+	jc near do_ink
+
+	mov di, input_cmd
+	call os_string_compare
+	jc near do_input
+
+	mov di, len_cmd
+	call os_string_compare
+	jc near do_len
+
+	mov di, listbox_cmd
+	call os_string_compare
+	jc near do_listbox
+
 	mov di, load_cmd
 	call os_string_compare
 	jc near do_load
+
+	mov di, loop_cmd
+	call os_string_compare
+	jc near do_loop
 
 	mov di, move_cmd
 	call os_string_compare
@@ -124,6 +171,14 @@ mainloop:
 	call os_string_compare
 	jc near do_next
 
+	mov di, number_cmd
+	call os_string_compare
+	jc near do_number
+
+	mov di, page_cmd
+	call os_string_compare
+	jc near do_page
+
 	mov di, pause_cmd
 	call os_string_compare
 	jc near do_pause
@@ -132,9 +187,17 @@ mainloop:
 	call os_string_compare
 	jc near do_peek
 
+	mov di, peekint_cmd
+	call os_string_compare
+	jc near do_peekint
+	
 	mov di, poke_cmd
 	call os_string_compare
 	jc near do_poke
+	
+	mov di, pokeint_cmd
+	call os_string_compare
+	jc near do_pokeint
 
 	mov di, port_cmd
 	call os_string_compare
@@ -148,9 +211,17 @@ mainloop:
 	call os_string_compare
 	jc near do_rand
 
+	mov di, read_cmd
+	call os_string_compare
+	jc near do_read
+
 	mov di, rem_cmd
 	call os_string_compare
 	jc near do_rem
+
+	mov di, rename_cmd
+	call os_string_compare
+	jc near do_rename
 
 	mov di, return_cmd
 	call os_string_compare
@@ -164,9 +235,17 @@ mainloop:
 	call os_string_compare
 	jc near do_serial
 
+	mov di, size_cmd
+	call os_string_compare
+	jc near do_size
+
 	mov di, sound_cmd
 	call os_string_compare
 	jc near do_sound
+	
+	mov di, string_cmd
+	call os_string_compare
+	jc near do_string
 
 	mov di, waitkey_cmd
 	call os_string_compare
@@ -180,7 +259,8 @@ mainloop:
 ; CLEAR RAM
 
 clear_ram:
-	mov al, 0
+	pusha
+	mov ax, 0
 
 	mov di, variables
 	mov cx, 52
@@ -193,8 +273,13 @@ clear_ram:
 	mov di, for_code_points
 	mov cx, 52
 	rep stosb
+	
+	mov di, do_loop_store
+	mov cx, 10
+	rep stosw
 
 	mov byte [gosub_depth], 0
+	mov byte [loop_in], 0
 
 	mov di, gosub_points
 	mov cx, 20
@@ -204,6 +289,9 @@ clear_ram:
 	mov cx, 1024
 	rep stosb
 
+	mov byte [ink_colour], 7		; White ink
+
+	popa
 	ret
 
 
@@ -387,6 +475,9 @@ assign:
 	cmp byte [.delim], '/'
 	jne .not_divide
 
+	cmp bx, 0
+	je .divide_zero
+	
 	mov dx, 0
 	div bx
 	jmp .finish
@@ -403,7 +494,10 @@ assign:
 
 	jmp .check_for_more
 
-
+.divide_zero:
+	mov si, err_divide_by_zero
+	jmp error
+	
 .handle_variable:
 	mov ax, 0
 	mov byte al, [token]
@@ -458,8 +552,13 @@ assign:
 	jmp .check_for_more
 
 
-.second_is_string:
+.second_is_string:				; These are "X = word" functions
 	mov di, token
+	
+	mov si, ink_keyword
+	call os_string_compare
+	je .is_ink
+	
 	mov si, progstart_keyword
 	call os_string_compare
 	je .is_progstart
@@ -468,7 +567,27 @@ assign:
 	call os_string_compare
 	je .is_ramstart
 
+	mov si, timer_keyword
+	call os_string_compare
+	je .is_timer
+	
+	mov si, version_keyword
+	call os_string_compare
+	je .is_version
+
 	jmp .error
+
+
+.is_ink:
+	mov ax, 0
+	mov byte al, [.tmp]
+	
+	mov bx, 0
+	mov byte bl, [ink_colour]
+	call set_var
+	
+	jmp mainloop
+
 
 .is_progstart:
 	mov ax, 0
@@ -478,7 +597,6 @@ assign:
 	call set_var
 
 	jmp mainloop
-
 
 
 .is_ramstart:
@@ -492,6 +610,29 @@ assign:
 	call set_var
 
 	jmp mainloop
+
+
+.is_timer:
+	mov ah, 0
+	int 1Ah
+	mov bx, dx
+
+	mov ax, 0
+	mov byte al, [.tmp]
+	call set_var
+
+	jmp mainloop
+
+
+.is_version:
+	call os_get_api_version
+	
+	mov bh, 0
+	mov bl, al
+	mov al, [.tmp]
+	call set_var
+	
+	jmp mainloop 
 
 
 .error:
@@ -511,22 +652,81 @@ assign:
 ; ALERT
 
 do_alert:
+	mov bh, [work_page]			; Store the cursor position
+	mov ah, 03h
+	int 10h
+
 	call get_token
 
 	cmp ax, QUOTE
 	je .is_quote
+	
+	cmp ax, STRING_VAR
+	je .is_string
 
 	mov si, err_syntax
 	jmp error
 
+.is_string:
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add ax, si
+	jmp .display_message
+	
 .is_quote:
 	mov ax, token				; First string for alert box
+	
+.display_message:
 	mov bx, 0				; Others are blank
 	mov cx, 0
 	mov dx, 0				; One-choice box
 	call os_dialog_box
+	
+	mov bh, [work_page]			; Move the cursor back
+	mov ah, 02h
+	int 10h
+	
 	jmp mainloop
 
+
+;-------------------------------------------------------------------
+; ASKFILE
+
+do_askfile:
+	mov bh, [work_page]			; Store the cursor position
+	mov ah, 03h
+	int 10h
+	
+	call get_token
+	
+	cmp ax, STRING_VAR
+	jne .error
+	
+	mov si, string_vars			; Get the string location
+	mov ax, 128
+	mul bx
+	add ax, si
+	mov word [.tmp], ax
+	
+	call os_file_selector			; Present the selector
+	
+	mov word si, [.tmp]			; Copy the string
+	mov di, ax
+	call os_string_copy
+
+	mov bh, [work_page]			; Move the cursor back
+	mov ah, 02h
+	int 10h
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+
+.data:
+	.tmp					dw 0
 
 ; ------------------------------------------------------------------
 ; CALL
@@ -562,8 +762,18 @@ do_call:
 ; CLS
 
 do_cls:
+	mov ah, 5
+	mov byte al, [work_page]
+	int 10
+
 	call os_clear_screen
+
+	mov ah, 5
+	mov byte al, [disp_page]
+	int 10
+
 	jmp mainloop
+
 
 
 ; ------------------------------------------------------------------
@@ -605,12 +815,12 @@ do_curschar:
 	call get_token
 
 	cmp ax, VARIABLE
-	je .is_ok
+	je .is_variable
 
 	mov si, err_syntax
 	jmp error
 
-.is_ok:
+.is_variable:
 	mov ax, 0
 	mov byte al, [token]
 
@@ -618,6 +828,7 @@ do_curschar:
 
 	mov ah, 08h
 	mov bx, 0
+	mov byte bh, [work_page]
 	int 10h				; Get char at current cursor location
 
 	mov bx, 0			; We only want the lower byte (the char, not attribute)
@@ -631,9 +842,161 @@ do_curschar:
 
 
 ; ------------------------------------------------------------------
+; CURSCOL
+
+do_curscol:
+	call get_token
+
+	cmp ax, VARIABLE
+	jne .error
+
+	mov ah, 0
+	mov byte al, [token]
+	push ax
+
+	mov ah, 8
+	mov bx, 0
+	mov byte bh, [work_page]
+	int 10h
+	mov bh, 0
+	mov bl, ah			; Get colour for higher byte; ignore lower byte (char)
+
+	pop ax
+	call set_var
+
+	jmp mainloop
+
+.error:
+	mov si, err_syntax
+	jmp error
+
+
+; ------------------------------------------------------------------
+; CURSPOS
+
+do_curspos:
+	mov byte bh, [work_page]
+	mov ah, 3
+	int 10h
+
+	call get_token
+	cmp ax, VARIABLE
+	jne .error
+
+	mov ah, 0			; Get the column in the first variable
+	mov byte al, [token]
+	mov bx, 0
+	mov bl, dl
+	call set_var
+
+	call get_token
+	cmp ax, VARIABLE
+	jne .error
+
+	mov ah, 0			; Get the row to the second
+	mov byte al, [token]
+	mov bx, 0
+	mov bl, dh
+	call set_var
+
+	jmp mainloop
+
+.error:
+	mov si, err_syntax
+	jmp error
+
+
+; ------------------------------------------------------------------
+; DELETE
+
+do_delete:
+	call get_token
+	cmp ax, QUOTE
+	je .is_quote
+
+	cmp ax, STRING_VAR
+	jne near .error
+
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+	jmp .get_filename
+
+.is_quote:
+	mov si, token
+
+.get_filename:
+	mov ax, si
+	call os_file_exists
+	jc .no_file
+
+	call os_remove_file
+	jc .del_fail
+
+	jmp .returngood
+
+.no_file:
+	mov ax, 0
+	mov byte al, 'R'
+	mov bx, 2
+	call set_var
+	jmp mainloop
+
+.returngood:
+	mov ax, 0
+	mov byte al, 'R'
+	mov bx, 0
+	call set_var
+	jmp mainloop
+
+.del_fail:
+	mov ax, 0
+	mov byte al, 'R'
+	mov bx, 1
+	call set_var
+	jmp mainloop
+
+.error:
+	mov si, err_syntax
+	jmp error
+	
+
+; ------------------------------------------------------------------
+; DO
+
+do_do:
+	cmp byte [loop_in], 10
+	je .loop_max
+	mov word di, do_loop_store
+	mov byte al, [loop_in]
+	mov ah, 0
+	add di, ax
+	mov si, di
+	lodsw
+	mov word ax, [prog]
+	sub ax, 3
+	stosw
+	inc byte [loop_in]
+	inc byte [loop_in]
+	jmp mainloop
+
+.loop_max:
+	mov si, err_doloop_maximum
+	jmp error
+
+	
+; ------------------------------------------------------------------
 ; END
 
 do_end:
+	mov ah, 5				; Restore active page
+	mov al, 0
+	int 10h
+
+	mov byte [work_page], 0
+	mov byte [disp_page], 0
+
 	mov word sp, [orig_stack]
 	ret
 
@@ -660,16 +1023,25 @@ do_for:
 
 	call get_token				; Next we want a number
 
+	cmp ax, VARIABLE
+	je .first_is_var
+
 	cmp ax, NUMBER
 	jne .error
 
 	mov si, token				; Convert it
 	call os_string_to_int
+	jmp .continue
 
-
+.first_is_var:
+	mov ax, 0				; It's a variable, so get it's value
+	mov al, [token]
+	call get_var
+	
 	; At this stage, we've read something like "FOR X = 1"
 	; so let's store that 1 in the variable table
 
+.continue:
 	mov bx, ax
 	mov ax, 0
 	mov byte al, [.tmp_var]
@@ -694,12 +1066,23 @@ do_for:
 
 	call get_token
 
+	cmp ax, VARIABLE
+	je .second_is_var
+
 	cmp ax, NUMBER
 	jne .error
 
+.second_is_number:
 	mov si, token					; Get target number
 	call os_string_to_int
+	jmp .continue2
 
+.second_is_var:
+	mov ax, 0				; It's a variable, so get it's value
+	mov al, [token]
+	call get_var
+
+.continue2:
 	mov bx, ax
 
 	mov ax, 0
@@ -758,15 +1141,43 @@ do_getkey:
 
 	call os_check_for_key
 
+	cmp ax, 48E0h
+	je .up_pressed
+
+	cmp ax, 50E0h
+	je .down_pressed
+
+	cmp ax, 4BE0h
+	je .left_pressed
+
+	cmp ax, 4DE0h
+	je .right_pressed
+
+.store:	
 	mov bx, 0
 	mov bl, al
-
+	
 	pop ax
 
 	call set_var
 
 	jmp mainloop
 
+.up_pressed:
+	mov ax, 1
+	jmp .store
+
+.down_pressed:
+	mov ax, 2
+	jmp .store
+
+.left_pressed:
+	mov ax, 3
+	jmp .store
+
+.right_pressed:
+	mov ax, 4
+	jmp .store
 
 ; ------------------------------------------------------------------
 ; GOSUB
@@ -915,7 +1326,7 @@ do_goto:
 	jmp error
 
 
-	.tmp_token times	30 db 0
+	.tmp_token 	times 30 db 0
 
 
 ; ------------------------------------------------------------------
@@ -1094,10 +1505,14 @@ do_if:
 .on_to_then:
 	call get_token
 
-	mov si, token
+	mov si, token			; Look for AND for more comparison
+	mov di, and_keyword
+	call os_string_compare
+	jc do_if
+
+	mov si, token			; Look for THEN to perform more operations
 	mov di, then_keyword
 	call os_string_compare
-
 	jc .then_present
 
 	mov si, err_syntax
@@ -1123,6 +1538,62 @@ do_if:
 
 
 	.tmp_string_var		db 0
+
+
+; ------------------------------------------------------------------
+; INCLUDE
+
+do_include:
+	call get_token
+	cmp ax, QUOTE
+	je .is_ok
+
+	mov si, err_syntax
+	jmp error
+
+.is_ok:
+	mov ax, token
+	mov word cx, [prog_end]
+	inc cx				; Add a bit of space after original code
+	inc cx
+	inc cx
+	push cx
+	call os_load_file
+	jc .load_fail
+
+	pop cx
+	add cx, bx
+	mov word [prog_end], cx
+
+	jmp mainloop
+
+
+.load_fail:
+	pop cx
+	mov si, err_file_notfound
+	jmp error
+
+
+; ------------------------------------------------------------------
+; INK
+
+do_ink:
+	call get_token				; Get column
+
+	cmp ax, VARIABLE
+	je .first_is_var
+
+	mov si, token
+	call os_string_to_int
+	mov byte [ink_colour], al
+	jmp mainloop
+
+.first_is_var:
+	mov ax, 0
+	mov byte al, [token]
+	call get_var
+	mov byte [ink_colour], al
+	jmp mainloop
 
 
 ; ------------------------------------------------------------------
@@ -1194,6 +1665,139 @@ do_input:
 
 
 	.tmpstring	times 128 db 0
+
+
+; -----------------------------------------------------------
+; LEN
+
+do_len:
+	call get_token
+	cmp ax, STRING_VAR
+	jne .error
+ 
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+
+	mov ax, si
+	call os_string_length
+	mov word [.num1], ax
+
+	call get_token
+	cmp ax, VARIABLE
+	je .is_ok
+	
+	mov si, err_syntax
+	jmp error
+
+.is_ok:
+	mov ax, 0
+	mov byte al, [token]
+	mov bl, al
+	jmp .finish
+
+.finish:	
+	mov bx, [.num1]
+	mov byte al, [token]
+	call set_var
+	mov ax, 0
+	jmp mainloop
+ 
+.error:
+	mov si, err_syntax
+	jmp error
+
+
+	.num1 dw 0
+
+
+; ------------------------------------------------------------------
+; LISTBOX
+
+do_listbox:
+	mov bh, [work_page]			; Store the cursor position
+	mov ah, 03h
+	int 10h
+	
+	call get_token
+	cmp ax, STRING_VAR
+	jne .error
+
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+
+	mov word [.s1], si
+
+	call get_token
+	cmp ax, STRING_VAR
+	jne .error
+
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+
+	mov word [.s2], si
+
+	call get_token
+	cmp ax, STRING_VAR
+	jne .error
+
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+
+	mov word [.s3], si
+
+
+	call get_token
+	cmp ax, VARIABLE
+	jne .error
+
+	mov byte al, [token]
+	mov byte [.var], al
+
+	mov word ax, [.s1]
+	mov word bx, [.s2]
+	mov word cx, [.s3]
+
+	call os_list_dialog
+	jc .esc_pressed
+
+	pusha
+	mov bh, [work_page]			; Move the cursor back
+	mov ah, 02h
+	int 10h
+	popa
+
+	mov bx, ax
+	mov ax, 0
+	mov byte al, [.var]
+	call set_var
+
+	jmp mainloop
+
+
+.esc_pressed:
+	mov ax, 0
+	mov byte al, [.var]
+	mov bx, 0
+	call set_var
+	jmp mainloop
+
+
+.error:
+	mov si, err_syntax
+	jmp error
+
+	.s1 dw 0
+	.s2 dw 0
+	.s3 dw 0
+	.var db 0
 
 
 ; ------------------------------------------------------------------
@@ -1277,6 +1881,144 @@ do_load:
 
 
 ; ------------------------------------------------------------------
+; LOOP
+
+do_loop:
+	cmp byte [loop_in], 0
+	je .no_do
+
+	dec byte [loop_in]
+	dec byte [loop_in]
+
+	mov dx, 0
+
+	call get_token
+	mov di, token
+	
+	mov si, .endless_word
+	call os_string_compare
+	jc .loop_back
+	
+	mov si, .while_word
+	call os_string_compare
+	jc .while_set
+	
+	mov si, .until_word
+	call os_string_compare
+	jnc .error
+	
+.get_first_var:
+	call get_token
+	cmp ax, VARIABLE
+	jne .error
+	
+	mov al, [token]
+	call get_var
+	mov cx, ax
+	
+.check_equals:
+	call get_token
+	cmp ax, UNKNOWN
+	jne .error
+
+	mov ax, [token]
+	cmp al, '='
+	je .sign_ok
+	cmp al, '>'
+	je .sign_ok
+	cmp al, '<'
+	je .sign_ok
+	jmp .error
+	.sign_ok:
+	mov byte [.sign], al
+	
+.get_second_var:
+ 	call get_token
+
+	cmp ax, NUMBER
+	je .second_is_num
+
+	cmp ax, VARIABLE
+	je .second_is_var
+
+	cmp ax, CHAR
+	jne .error
+
+.second_is_char:
+	mov ah, 0
+	mov al, [token]
+	jmp .check_true
+	
+.second_is_var:
+	mov al, [token]
+	call get_var
+	jmp .check_true
+	
+.second_is_num:
+	mov si, token
+	call os_string_to_int
+	
+.check_true:
+	mov byte bl, [.sign]
+	cmp bl, '='
+	je .sign_equals
+	
+	cmp bl, '>'
+	je .sign_greater
+	
+	jmp .sign_lesser
+	
+.sign_equals:
+	cmp ax, cx
+	jne .false
+	jmp .true
+	
+.sign_greater:
+	cmp ax, cx
+	jge .false
+	jmp .true
+	
+.sign_lesser:
+	cmp ax, cx
+	jle .false
+	jmp .true
+.true:
+	cmp dx, 1
+	je .loop_back
+	jmp mainloop
+.false:
+	cmp dx, 1
+	je mainloop
+	
+.loop_back:	
+	mov word si, do_loop_store
+	mov byte al, [loop_in]
+	mov ah, 0
+	add si, ax
+	lodsw
+	mov word [prog], ax
+	jmp mainloop
+	
+.while_set:
+	mov dx, 1
+	jmp .get_first_var
+	
+.no_do:
+	mov si, err_loop
+	jmp error
+
+.error:
+	mov si, err_syntax
+	jmp error
+	
+.data:
+	.while_word			db "WHILE", 0
+	.until_word			db "UNTIL", 0
+	.endless_word			db "ENDLESS", 0
+	.sign				db 0
+	
+	
+; ------------------------------------------------------------------
 ; MOVE
 
 do_move:
@@ -1314,7 +2056,9 @@ do_move:
 	mov dh, al
 
 .finish:
-	call os_move_cursor
+	mov byte bh, [work_page]
+	mov ah, 2
+	int 10h
 
 	jmp mainloop
 
@@ -1366,6 +2110,109 @@ do_next:
 
 
 .loop_finished:
+	jmp mainloop
+
+.error:
+	mov si, err_syntax
+	jmp error
+
+
+
+;-------------------------------------------------------------------
+; NUMBER
+
+do_number:
+	call get_token			; Check if it's string to number, or number to string
+
+	cmp ax, STRING_VAR
+	je .is_string
+
+	cmp ax, VARIABLE
+	je .is_variable
+
+	jmp .error
+
+.is_string:
+
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+	mov [.tmp], si
+
+	call get_token
+
+	mov si, [.tmp]
+
+	cmp ax, VARIABLE
+	jne .error
+
+	call os_string_to_int
+	mov bx, ax
+
+	mov ax, 0
+	mov byte al, [token]
+	call set_var
+
+	jmp mainloop
+
+.is_variable:
+
+	mov ax, 0			; Get the value of the number
+	mov byte al, [token]
+	call get_var
+
+	call os_int_to_string		; Convert to a string
+	mov [.tmp], ax
+
+	call get_token			; Get the second parameter
+
+	mov si, [.tmp]
+
+	cmp ax, STRING_VAR		; Make sure it's a string variable
+	jne .error
+
+	mov di, string_vars		; Locate string variable
+	mov ax, 128
+	mul bx
+	add di, ax
+
+	call os_string_copy		; Save converted string
+
+	jmp mainloop
+
+.error:
+	mov si, err_syntax
+	jmp error
+
+
+	.tmp		dw 	0
+
+
+;-------------------------------------------------------------------
+; PAGE
+
+do_page:
+	call get_token
+	cmp ax, NUMBER
+	jne .error
+
+	mov si, token
+	call os_string_to_int
+	mov byte [work_page], al	; Set work page variable
+
+	call get_token
+	cmp ax, NUMBER
+	jne .error
+
+	mov si, token
+	call os_string_to_int
+	mov byte [disp_page], al	; Set display page variable
+
+	; Change display page -- AL should already be present from the os_string_to_int
+	mov ah, 5
+	int 10h
+
 	jmp mainloop
 
 .error:
@@ -1441,6 +2288,51 @@ do_peek:
 
 
 	.tmp_var	db 0
+	
+	
+	
+; ------------------------------------------------------------------
+; PEEKINT
+
+do_peekint:
+	call get_token
+	
+	cmp ax, VARIABLE
+	jne .error
+
+.get_second:
+	mov al, [token]
+	mov cx, ax
+	
+	call get_token
+	
+	cmp ax, VARIABLE
+	je .address_is_var
+	
+	cmp ax, NUMBER
+	jne .error
+	
+.address_is_number:
+	mov si, token
+	call os_string_to_int
+	jmp .load_data
+	
+.address_is_var:
+	mov al, [token]
+	call get_var
+	
+.load_data:
+	mov si, ax
+	mov bx, [si]
+	mov ax, cx
+	call set_var
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+
 
 
 ; ------------------------------------------------------------------
@@ -1504,6 +2396,62 @@ do_poke:
 
 
 	.first_value	db 0
+
+
+
+
+; ------------------------------------------------------------------
+; POKEINT
+
+do_pokeint:
+	call get_token
+	
+	cmp ax, VARIABLE
+	je .data_is_var
+	
+	cmp ax, NUMBER
+	jne .error
+
+.data_is_num:
+	mov si, token
+	call os_string_to_int
+	jmp .get_second
+	
+.data_is_var:
+	mov al, [token]
+	call get_var
+	
+.get_second:
+	mov cx, ax
+	
+	call get_token
+	
+	cmp ax, VARIABLE
+	je .address_is_var
+	
+	cmp ax, NUMBER
+	jne .error
+	
+.address_is_num:
+	mov si, token
+	call os_string_to_int
+	jmp .save_data
+	
+.address_is_var:
+	mov al, [token]
+	call get_var
+	
+.save_data:
+	mov si, ax
+	mov [si], cx
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+
+
 
 
 ; ------------------------------------------------------------------
@@ -1627,19 +2575,45 @@ do_print:
 
 .print_quote:					; If it's quoted text, print it
 	mov si, token
-	call os_print_string
+.print_quote_loop:
+	lodsb
+	cmp al, 0
+	je .newline_or_not
 
-	jmp .newline_or_not
+	mov ah, 09h
+	mov byte bl, [ink_colour]
+	mov byte bh, [work_page]
+	mov cx, 1
+	int 10h
 
+	mov ah, 3
+	int 10h
+
+	cmp dl, 79
+	jge .quote_newline
+	inc dl
+
+.move_cur_quote:
+	mov byte bh, [work_page]
+	mov ah, 02h
+	int 10h
+	jmp .print_quote_loop
+
+
+.quote_newline:
+	cmp dh, 24
+	je .move_cur_quote
+	mov dl, 0
+	inc dh
+	jmp .move_cur_quote
 
 .print_string_var:
 	mov si, string_vars
 	mov ax, 128
 	mul bx
 	add si, ax
-	call os_print_string
 
-	jmp .newline_or_not
+	jmp .print_quote_loop
 
 
 .print_keyword:
@@ -1659,13 +2633,35 @@ do_print:
 	call get_token
 
 	cmp ax, VARIABLE
-	jne .error
+	je .is_chr_variable
+	
+	cmp ax, NUMBER
+	je .is_chr_number
 
+.is_chr_variable:
 	mov ax, 0
 	mov byte al, [token]
 	call get_var
+	jmp .print_chr
+	
+.is_chr_number:
+	mov si, token
+	call os_string_to_int
 
-	mov ah, 0Eh
+.print_chr:
+	mov ah, 09h
+	mov byte bl, [ink_colour]
+	mov byte bh, [work_page]
+	mov cx, 1
+	int 10h
+
+	mov ah, 3		; Move the cursor forward
+	int 10h
+	inc dl
+	cmp dl, 79
+	jg .end_line		; If it's over the end of the line
+.move_cur:
+	mov ah, 2
 	int 10h
 
 	jmp .newline_or_not
@@ -1685,10 +2681,19 @@ do_print:
 
 	jmp .newline_or_not
 
+.end_line:
+	mov dl, 0
+	inc dh
+	cmp dh, 25
+	jl .move_cur
+	mov dh, 24
+	mov dl, 79
+	jmp .move_cur
+
 .error:
 	mov si, err_syntax
 	jmp error
-
+	
 
 
 .newline_or_not:
@@ -1713,7 +2718,15 @@ do_print:
 	jmp mainloop				; And go back to interpreting the code!
 
 .ignore:
+	mov ah, 5
+	mov al, [work_page]
+	int 10h
+
+	mov bh, [work_page]
 	call os_print_newline
+
+	mov ah, 5
+	mov al, [disp_page]
 
 	mov word ax, [.tmp_loc]
 	mov word [prog], ax
@@ -1774,6 +2787,148 @@ do_rand:
 
 
 ; ------------------------------------------------------------------
+; READ
+
+do_read:
+	call get_token				; Get the next token
+
+	cmp ax, STRING				; Check for a label
+	je .is_ok
+
+	mov si, err_goto_notlabel
+	jmp error
+
+.is_ok:
+	mov si, token				; Back up this label
+	mov di, .tmp_token
+	call os_string_copy
+
+	mov ax, .tmp_token
+	call os_string_length
+
+	mov di, .tmp_token			; Add ':' char to end for searching
+	add di, ax
+	mov al, ':'
+	stosb
+	mov al, 0
+	stosb
+
+	call get_token				; Now get the offset variable
+	cmp ax, VARIABLE
+	je .second_part_is_var
+
+	mov si, err_syntax
+	jmp error
+
+
+.second_part_is_var:
+	mov ax, 0
+	mov byte al, [token]
+	call get_var
+
+	cmp ax, 0				; Want to be searching for at least the first byte!
+	jg .var_bigger_than_zero
+
+	mov si, err_syntax
+	jmp error
+
+
+.var_bigger_than_zero:
+	mov word [.to_skip], ax
+
+
+	call get_token				; And now the var to store result into
+	cmp ax, VARIABLE
+	je .third_part_is_var
+
+	mov si, err_syntax
+	jmp error
+
+
+.third_part_is_var:				; Keep it for later
+	mov ax, 0
+	mov byte al, [token]
+	mov byte [.var_to_use], al
+
+
+
+	; OK, so now we have all the stuff we need. Let's search for the label
+
+	mov word ax, [prog]			; Store current location
+	mov word [.curr_location], ax
+
+	mov word ax, [load_point]
+	mov word [prog], ax			; Return to start of program to find label
+
+.loop:
+	call get_token
+
+	cmp ax, LABEL
+	jne .line_loop
+
+	mov si, token
+	mov di, .tmp_token
+	call os_string_compare
+	jc .found_label
+
+.line_loop:					; Go to end of line
+	mov word si, [prog]
+	mov byte al, [si]
+	inc word [prog]
+
+	cmp al, 10
+	jne .line_loop
+
+	mov word ax, [prog]
+	mov word bx, [prog_end]
+	cmp ax, bx
+	jg .past_end
+
+	jmp .loop
+
+.past_end:
+	mov si, err_label_notfound
+	jmp error
+
+
+.found_label:
+	mov word cx, [.to_skip]			; Skip requested number of data entries
+
+.data_skip_loop:
+	push cx
+	call get_token
+	pop cx
+	loop .data_skip_loop
+
+	cmp ax, NUMBER
+	je .data_is_num
+
+	mov si, err_syntax
+	jmp error
+
+.data_is_num:
+	mov si, token
+	call os_string_to_int
+
+	mov bx, ax
+	mov ax, 0
+	mov byte al, [.var_to_use]
+	call set_var
+
+	mov word ax, [.curr_location]
+	mov word [prog], ax
+
+	jmp mainloop
+
+
+	.curr_location	dw 0
+
+	.to_skip	dw 0
+	.var_to_use	db 0
+	.tmp_token 	times 30 db 0
+
+
+; ------------------------------------------------------------------
 ; REM
 
 do_rem:
@@ -1784,6 +2939,118 @@ do_rem:
 	jne do_rem
 
 	jmp mainloop
+
+
+; ------------------------------------------------------------------
+; RENAME
+
+do_rename:
+	call get_token
+
+	cmp ax, STRING_VAR		; Is it a string or a quote?
+	je .first_is_string
+
+	cmp ax, QUOTE
+	je .first_is_quote
+
+	jmp .error
+
+.first_is_string:
+	mov si, string_vars		; Locate string
+	mov ax, 128
+	mul bx
+	add si, ax
+
+	jmp .save_file1
+
+.first_is_quote:
+	mov si, token			; The location of quotes is provided
+
+.save_file1:
+	mov word di, .file1		; The filename is saved to temporary strings because
+	call os_string_copy		; getting a second quote will overwrite the previous
+	
+.get_second:
+	call get_token
+
+	cmp ax, STRING_VAR
+	je .second_is_string
+
+	cmp ax, QUOTE
+	je .second_is_quote
+
+	jmp .error
+
+.second_is_string:
+	mov si, string_vars		; Locate second string
+	mov ax, 128
+	mul bx
+	add si, ax
+
+	jmp .save_file2
+
+.second_is_quote:
+	mov si, token
+
+.save_file2:
+	mov word di, .file2
+	call os_string_copy
+	
+.check_exists:
+	mov word ax, .file1		; Check if the source file exists
+	call os_file_exists
+	jc .file_not_found		; If it doesn't exists set "R = 1"
+
+	clc
+	mov ax, .file2			; The second file is the destination and should not exist
+	call os_file_exists
+	jnc .file_exists		; If it exists set "R = 3"
+	
+.rename:
+	mov word ax, .file1		; Seem to be okay, lets rename
+	mov word bx, .file2
+	call os_rename_file
+
+	jc .rename_failed		; If it failed set "R = 2", usually caused by a read-only disk
+
+	mov ax, 0			; It worked sucessfully, so set "R = 0" to indicate no error
+	mov byte al, 'R'
+	mov bx, 0
+	call set_var
+
+	jmp mainloop
+
+.error:
+	mov si, err_syntax
+	jmp error
+
+.file_not_found:
+	mov ax, 0			; Set R variable to 1
+	mov byte al, 'R'
+	mov bx, 1
+	call set_var
+
+	jmp mainloop
+
+.rename_failed:
+	mov ax, 0			; Set R variable to 2
+	mov byte al, 'R'
+	mov bx, 2
+	call set_var
+
+	jmp mainloop
+
+.file_exists:
+	mov ax, 0
+	mov byte al, 'R'		; Set R variable to 3
+	mov bx, 3
+	call set_var
+
+	jmp mainloop
+
+.data:
+	.file1				times 12 db 0
+	.file2				times 12 db 0
 
 
 ; ------------------------------------------------------------------
@@ -1858,14 +3125,19 @@ do_save:
 	mov si, token
 	call os_string_to_int
 
-.set_data_size:
+.check_exists:
 	mov word [.data_size], ax
-
+	mov word ax, .tmp_filename
+	call os_file_exists
+	jc .write_file
+	jmp .file_exists_fail
+	
+.write_file:
 
 	mov word ax, .tmp_filename
 	mov word bx, [.data_loc]
 	mov word cx, [.data_size]
-
+	
 	call os_write_file
 	jc .save_failure
 
@@ -1888,9 +3160,15 @@ do_save:
 	mov ax, 0
 	mov byte al, [token]
 	call get_var
-	jmp .set_data_size
+	jmp .check_exists
 
-
+.file_exists_fail:
+	mov ax, 0
+	mov byte al, 'R'
+	mov bx, 2
+	call set_var
+	jmp mainloop
+	
 .save_failure:
 	mov ax, 0
 	mov byte al, 'R'
@@ -2013,6 +3291,66 @@ do_serial:
 
 
 ; ------------------------------------------------------------------
+; SIZE
+
+do_size:
+	call get_token
+
+	cmp ax, STRING_VAR
+	je .is_string
+
+	cmp ax, QUOTE
+	je .is_quote
+
+	jmp .error
+
+.is_string:
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+
+	mov ax, si
+	jmp .get_size
+
+.is_quote:
+	mov ax, token
+
+.get_size:
+	call os_get_file_size
+	jc .file_not_found
+
+	mov ax, 0
+	mov al, 'S'
+	call set_var
+
+	mov ax, 0
+	mov al, 'R'
+	mov bx, 0
+	call set_var
+
+	jmp mainloop
+
+.error:
+	mov si, err_syntax
+	jmp error
+
+.file_not_found:
+	mov ax, 0
+	mov al, [token]
+	mov bx, 0
+	call set_var
+
+	mov ax, 0
+	mov al, 'R'
+	mov bx, 1
+ 	call set_var
+ 	
+	jmp mainloop
+
+
+
+; ------------------------------------------------------------------
 ; SOUND
 
 do_sound:
@@ -2052,6 +3390,115 @@ do_sound:
 	call os_speaker_off
 
 	jmp mainloop
+
+
+;-------------------------------------------------------------------
+; STRING
+do_string:
+	call get_token			; The first parameter is the word 'GET' or 'SET'
+	mov si, token
+	
+	mov di, .get_cmd
+	call os_string_compare
+	jc .set_str
+		
+	mov di, .set_cmd
+	call os_string_compare
+	jc .get_str
+	
+	jmp .error
+	
+	.set_str:
+	mov cx, 1
+	jmp .check_second
+	.get_str:
+	mov cx, 2
+
+.check_second:
+	call get_token			; The next should be a string variable, locate it
+	
+	cmp ax, STRING_VAR
+	jne .error
+	
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add si, ax
+	mov word [.string_loc], si
+	
+.check_third:
+	call get_token			; Now there should be a number
+	
+	cmp ax, NUMBER
+	je .third_is_number
+	
+	cmp ax, VARIABLE
+	je .third_is_variable
+	
+	jmp .error
+	
+.third_is_number:	
+	mov si, token
+	call os_string_to_int
+	jmp .got_number	
+
+.third_is_variable:
+	mov ah, 0
+	mov al, [token]
+	call get_var
+	jmp .got_number
+
+.got_number:
+	cmp ax, 128
+	jg .outrange
+	cmp ax, 0
+	je .outrange
+	sub ax, 1
+	mov dx, ax
+	
+.check_forth:
+	call get_token			; Next a numerical variable
+	
+	cmp ax, VARIABLE
+	jne .error
+	
+	mov byte al, [token]
+	mov byte [.tmp], al
+	
+	cmp cx, 2
+	je .set_var
+	
+.get_var:
+	mov word si, [.string_loc]	; Move to string location
+	add si, dx			; Add offset
+	lodsb				; Load data
+	mov ah, 0
+	mov bx, ax			; Set data in numerical variable
+	mov byte al, [.tmp]
+	call set_var
+	jmp mainloop
+	
+.set_var:
+	mov byte al, [.tmp]		; Retrieve the variable
+	call get_var			; Get it's value
+	mov di, [.string_loc]		; Locate the string
+	add di, dx			; Add the offset
+	stosb				; Store data
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
+	
+.outrange:
+	mov si, err_string_range
+	jmp error
+
+.data:
+	.get_cmd		db "GET", 0
+	.set_cmd		db "SET", 0
+	.string_loc		dw 0
+	.tmp			db 0
 
 
 ; ------------------------------------------------------------------
@@ -2120,6 +3567,7 @@ do_waitkey:
 ; Get value of variable character specified in AL (eg 'A')
 
 get_var:
+	mov ah, 0
 	sub al, 65
 	mov si, variables
 	add si, ax
@@ -2357,6 +3805,13 @@ is_letter:
 ; Print error message and quit out
 
 error:
+	mov ah, 5			; Revert display page
+	mov al, 0
+	int 10h
+
+	mov byte [work_page], 0
+	mov byte [disp_page], 0
+
 	call os_print_newline
 	call os_print_string		; Print error message
 	call os_print_newline
@@ -2368,17 +3823,21 @@ error:
 
 	; Error messages text...
 
-	err_char_in_num		db "Error: unexpected character in number", 0
-	err_quote_term		db "Error: quoted string or character not terminated correctly", 0
-	err_print_type		db "Error: PRINT command not followed by quoted text or variable", 0
+	err_char_in_num		db "Error: unexpected char in number", 0
 	err_cmd_unknown		db "Error: unknown command", 0
+	err_divide_by_zero	db "Error: attempt to divide by zero", 0
+	err_doloop_maximum	db "Error: DO/LOOP nesting limit exceeded", 0
+	err_file_notfound	db "Error: file not found", 0
 	err_goto_notlabel	db "Error: GOTO or GOSUB not followed by label", 0
-	err_label_notfound	db "Error: GOTO or GOSUB label not found", 0
-	err_return		db "Error: RETURN without GOSUB", 0
+	err_label_notfound	db "Error: label not found", 0
 	err_nest_limit		db "Error: FOR or GOSUB nest limit exceeded", 0
 	err_next		db "Error: NEXT without FOR", 0
+	err_loop		db "Error: LOOP without DO", 0
+	err_print_type		db "Error: PRINT not followed by quoted text or variable", 0
+	err_quote_term		db "Error: quoted string or char not terminated correctly", 0
+	err_return		db "Error: RETURN without GOSUB", 0
+	err_string_range	db "Error: string location out of range", 0
 	err_syntax		db "Error: syntax error", 0
-
 
 
 ; ==================================================================
@@ -2395,43 +3854,73 @@ error:
 	token			times 255 db 0	; Storage space for the token
 
 	variables		times 26 dw 0	; Storage space for variables A to Z
+
 	for_variables		times 26 dw 0	; Storage for FOR loops
 	for_code_points		times 26 dw 0	; Storage for code positions where FOR loops start
+	
+	do_loop_store		times 10 dw 0	; Storage for DO loops
+	loop_in			db 0		; Loop level
+
+	ink_colour		db 0		; Text printing colour
+	work_page		db 0		; Page to print to
+	disp_page		db 0		; Page to display
 
 	alert_cmd		db "ALERT", 0
+	askfile_cmd		db "ASKFILE", 0
 	call_cmd		db "CALL", 0
 	cls_cmd			db "CLS", 0
 	cursor_cmd		db "CURSOR", 0
 	curschar_cmd		db "CURSCHAR", 0
+	curscol_cmd		db "CURSCOL", 0
+	curspos_cmd		db "CURSPOS", 0
+	delete_cmd		db "DELETE", 0
+	do_cmd			db "DO", 0
 	end_cmd			db "END", 0
 	for_cmd 		db "FOR", 0
 	gosub_cmd		db "GOSUB", 0
 	goto_cmd		db "GOTO", 0
 	getkey_cmd		db "GETKEY", 0
 	if_cmd 			db "IF", 0
+	include_cmd		db "INCLUDE", 0
+	ink_cmd			db "INK", 0
 	input_cmd 		db "INPUT", 0
+	len_cmd			db "LEN", 0
+	listbox_cmd		db "LISTBOX", 0
 	load_cmd		db "LOAD", 0
+	loop_cmd		db "LOOP", 0
 	move_cmd 		db "MOVE", 0
 	next_cmd 		db "NEXT", 0
+	number_cmd		db "NUMBER", 0
+	page_cmd		db "PAGE", 0
 	pause_cmd 		db "PAUSE", 0
 	peek_cmd		db "PEEK", 0
+	peekint_cmd		db "PEEKINT", 0
 	poke_cmd		db "POKE", 0
+	pokeint_cmd		db "POKEINT", 0
 	port_cmd		db "PORT", 0
 	print_cmd 		db "PRINT", 0
-	rem_cmd			db "REM", 0
 	rand_cmd		db "RAND", 0
+	read_cmd		db "READ", 0
+	rem_cmd			db "REM", 0
+	rename_cmd		db "RENAME", 0
 	return_cmd		db "RETURN", 0
 	save_cmd		db "SAVE", 0
 	serial_cmd		db "SERIAL", 0
+	size_cmd		db "SIZE", 0
 	sound_cmd 		db "SOUND", 0
+	string_cmd		db "STRING", 0
 	waitkey_cmd		db "WAITKEY", 0
 
+	and_keyword		db "AND", 0
 	then_keyword		db "THEN", 0
 	chr_keyword		db "CHR", 0
 	hex_keyword		db "HEX", 0
 
+	ink_keyword		db "INK", 0
 	progstart_keyword	db "PROGSTART", 0
 	ramstart_keyword	db "RAMSTART", 0
+	timer_keyword		db "TIMER", 0
+	version_keyword		db "VERSION", 0
 
 	gosub_depth		db 0
 	gosub_points		times 10 dw 0	; Points in code to RETURN to

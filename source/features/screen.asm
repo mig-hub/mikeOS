@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; SCREEN HANDLING SYSTEM CALLS
 ; ==================================================================
@@ -243,7 +243,7 @@ os_file_selector:
 	ret
 
 
-	.buffer		times 256 db 0
+	.buffer		times 1024 db 0
 
 	.help_msg1	db 'Please select a file using the cursor', 0
 	.help_msg2	db 'keys from the list below...', 0
@@ -266,6 +266,23 @@ os_list_dialog:
 	push bx
 
 	call os_hide_cursor
+
+
+	mov cl, 0			; Count the number of entries in the list
+	mov si, ax
+.count_loop:
+	lodsb
+	cmp al, 0
+	je .done_count
+	cmp al, ','
+	jne .count_loop
+	inc cl
+	jmp .count_loop
+
+.done_count:
+	inc cl
+	mov byte [.num_of_entries], cl
+
 
 	mov bl, 01001111b		; White on red
 	mov dl, 20			; Start X position
@@ -291,12 +308,18 @@ os_list_dialog:
 	pop si				; SI = location of option list string (pushed earlier)
 	mov word [.list_string], si
 
-	; After this, BL = bottom line of list
-
 
 	; Now that we've drawn the list, highlight the currently selected
 	; entry and let the user move up and down using the cursor keys
 
+	mov byte [.skip_num], 0		; Not skipping any lines at first showing
+
+	mov dl, 25			; Set up starting position for selector
+	mov dh, 7
+
+	call os_move_cursor
+
+.more_select:
 	pusha
 	mov bl, 11110000b		; Black on white for option list box
 	mov dl, 21
@@ -306,13 +329,6 @@ os_list_dialog:
 	call os_draw_block
 	popa
 
-
-	mov dl, 25			; Set up starting position for selector
-	mov dh, 7
-
-	call os_move_cursor
-
-.more_select:
 	call .draw_black_bar
 
 	mov word si, [.list_string]
@@ -333,7 +349,7 @@ os_list_dialog:
 
 .go_up:
 	cmp dh, 7			; Already at top?
-	jle .another_key
+	jle .hit_top
 
 	call .draw_white_bar
 
@@ -344,9 +360,20 @@ os_list_dialog:
 	jmp .more_select
 
 
-.go_down:				; Already at bottom?
-	cmp dh, bl
-	jae .another_key
+.go_down:				; Already at bottom of list?
+	cmp dh, 20
+	je .hit_bottom
+
+	mov cx, 0
+	mov byte cl, dh
+
+	sub cl, 7
+	inc cl
+	add byte cl, [.skip_num]
+
+	mov byte al, [.num_of_entries]
+	cmp cl, al
+	je .another_key
 
 	call .draw_white_bar
 
@@ -355,6 +382,32 @@ os_list_dialog:
 
 	inc dh
 	jmp .more_select
+
+
+.hit_top:
+	mov byte cl, [.skip_num]	; Any lines to scroll up?
+	cmp cl, 0
+	je .another_key			; If not, wait for another key
+
+	dec byte [.skip_num]		; If so, decrement lines to skip
+	jmp .more_select
+
+
+.hit_bottom:				; See if there's more to scroll
+	mov cx, 0
+	mov byte cl, dh
+
+	sub cl, 7
+	inc cl
+	add byte cl, [.skip_num]
+
+	mov byte al, [.num_of_entries]
+	cmp cl, al
+	je .another_key
+
+	inc byte [.skip_num]		; If so, increment lines to skip
+	jmp .more_select
+
 
 
 .option_selected:
@@ -366,6 +419,7 @@ os_list_dialog:
 	mov al, dh
 
 	inc al				; Options start from 1
+	add byte al, [.skip_num]	; Add any lines skipped from scrolling
 
 	mov word [.tmp], ax		; Store option number before restoring all other regs
 
@@ -376,11 +430,13 @@ os_list_dialog:
 	ret
 
 
+
 .esc_pressed:
 	call os_show_cursor
 	popa
 	stc				; Set carry for Esc
 	ret
+
 
 
 .draw_list:
@@ -390,7 +446,24 @@ os_list_dialog:
 	mov dh, 7
 	call os_move_cursor
 
+
+	mov cx, 0			; Skip lines scrolled off the top of the dialog
+	mov byte cl, [.skip_num]
+
+.skip_loop:
+	cmp cx, 0
+	je .skip_loop_finished
+.more_lodsb:
+	lodsb
+	cmp al, ','
+	jne .more_lodsb
+	dec cx
+	jmp .skip_loop
+
+
+.skip_loop_finished:
 	mov bx, 0			; Counter for total number of options
+
 
 .more:
 	lodsb				; Get next character in file name, increment pointer
@@ -415,18 +488,11 @@ os_list_dialog:
 	jl .more
 
 .done_list:
-	add bl, 7			; Last option -> line number (option 1 is on line 7)
-
-	mov byte [.bottom_line], bl
-
 	popa
 	call os_move_cursor
 
-	mov byte bl, [.bottom_line]
-
 	ret
 
-	.bottom_line db 0
 
 
 .draw_black_bar:
@@ -446,6 +512,7 @@ os_list_dialog:
 	ret
 
 
+
 .draw_white_bar:
 	pusha
 
@@ -463,12 +530,14 @@ os_list_dialog:
 	ret
 
 
-	.tmp dw 0
-	.list_string dw 0
+	.tmp			dw 0
+	.num_of_entries		db 0
+	.skip_num		db 0
+	.list_string		dw 0
 
 
 ; ------------------------------------------------------------------
-; os_draw_background -- Clear screen with white top and bottom bars,
+; os_draw_background -- Clear screen with white top and bottom bars
 ; containing text, and a coloured middle section.
 ; IN: AX/BX = top/bottom string locations, CX = colour
 

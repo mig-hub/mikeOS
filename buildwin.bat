@@ -4,15 +4,15 @@ echo.
 
 echo Assembling bootloader...
 cd source\bootload
-nasm -f bin -o bootload.bin bootload.asm
+nasm -O0 -f bin -o bootload.bin bootload.asm
 cd ..
 
 echo Assembling MikeOS kernel...
-nasm -f bin -o kernel.bin kernel.asm
+nasm -O0 -f bin -o kernel.bin kernel.asm
 
 echo Assembling programs...
 cd ..\programs
- for %%i in (*.asm) do nasm -fbin %%i
+ for %%i in (*.asm) do nasm -O0 -fbin %%i
  for %%i in (*.bin) do del %%i
  for %%i in (*.) do ren %%i %%i.bin
 cd ..
@@ -28,8 +28,8 @@ imdisk -a -f disk_images\mikeos.flp -s 1440K -m B:
 echo Copying kernel and applications to disk image...
 copy source\kernel.bin b:\
 copy programs\*.bin b:\
-copy programs\test.pcx b:\
-copy programs\example.bas b:\
+copy programs\sample.pcx b:\
+copy programs\*.bas b:\
 
 echo Dismounting disk image...
 imdisk -D -m B:

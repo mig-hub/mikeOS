@@ -329,7 +329,7 @@ start:
 	ret			; Back to OS
 
 
-	mus_kbd_title_msg	db 'MikeOS Music Keyboard', 0
+	mus_kbd_title_msg	db 'MikeOS Music Keyboard (PC speaker sound)', 0
 	mus_kbd_footer_msg	db 'Hit keys to play notes, space to silence a note, and Q to quit', 0
 
 

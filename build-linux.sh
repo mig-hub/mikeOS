@@ -25,13 +25,13 @@ fi
 
 echo ">>> Assembling bootloader..."
 
-nasm -w+orphan-labels -f bin -o source/bootload/bootload.bin source/bootload/bootload.asm || exit
+nasm -O0 -w+orphan-labels -f bin -o source/bootload/bootload.bin source/bootload/bootload.asm || exit
 
 
 echo ">>> Assembling MikeOS kernel..."
 
 cd source
-nasm -w+orphan-labels -f bin -o kernel.bin kernel.asm || exit
+nasm -O0 -w+orphan-labels -f bin -o kernel.bin kernel.asm || exit
 cd ..
 
 
@@ -41,7 +41,7 @@ cd programs
 
 for i in *.asm
 do
-	nasm -w+orphan-labels -f bin $i -o `basename $i .asm`.bin || exit
+	nasm -O0 -w+orphan-labels -f bin $i -o `basename $i .asm`.bin || exit
 done
 
 cd ..
@@ -58,7 +58,9 @@ rm -rf tmp-loop
 
 mkdir tmp-loop && mount -o loop -t vfat disk_images/mikeos.flp tmp-loop && cp source/kernel.bin tmp-loop/
 
-cp programs/*.bin programs/example.bas programs/test.pcx tmp-loop
+cp programs/*.bin programs/*.bas programs/sample.pcx tmp-loop
+
+sleep 0.2
 
 echo ">>> Unmounting loopback floppy..."
 

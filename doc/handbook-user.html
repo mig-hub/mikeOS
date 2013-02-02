@@ -110,7 +110,7 @@ li {
 
 <h1>The MikeOS User Handbook</h1>
 
-<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+<h3>For version 4.3, 24 February 2012 - (C) MikeOS Developers</h3>
 
 <p>This documentation file explains how to boot and use the MikeOS operating system on a real PC or an
 emulator. If you have just downloaded MikeOS and want to run it, this is the guide you need. If you have
@@ -214,10 +214,10 @@ the OS as described in the other two Handbooks.</p>
 <p>Some of the best emulators:</p>
 
 <ul>
-<li><strong>QEMU</strong> -- Small, simple and open source (<a href="http://www.bellard.org/qemu/">link</a>)</li>
+<li><strong>QEMU</strong> -- Small, simple and open source (<a href="http://www.qemu.org">link</a>)</li>
 <li><strong>VirtualBox</strong> -- Very powerful with a good GUI (<a href="http://www.virtualbox.org">link</a>)</li>
 <li><strong>VMware</strong> -- Popular proprietary virtualisation app (<a href="http://www.vmware.com">link</a>)</li>
-<li><strong>Bochs</strong> -- Takes a bit of work to set up, but good debugging tools (<a href="bochs.sourceforge.net">link</a>)</li>
+<li><strong>Bochs</strong> -- Takes a bit of work to set up, but good debugging tools (<a href="http://bochs.sourceforge.net">link</a>)</li>
 </ul>
 
 <p>For VirtualBox and VMware, configure the boot device to use the MikeOS floppy disk or CD ISO image.
@@ -251,8 +251,9 @@ keys and hit Enter to run it. Also, you can press Esc to return back to the orig
 selection screen.</p>
 
 <p>At the command line, enter <strong>DIR</strong> to show a list of programs, and <strong>HELP</strong>
-to display inbuilt commands. You can run a program by entering the full filename (eg <strong>HELLO.BIN</strong>)
-or just the name without the extension (eg <strong>HELLO</strong>).</p>
+to display inbuilt commands. You can run a program by entering the full filename (eg <strong>EDIT.BIN</strong>)
+or just the name without the extension (eg <strong>EDIT</strong>). There are also file management commands such
+as COPY, REN, DEL and SIZE.</p>
 
 
 <br />
@@ -268,10 +269,15 @@ or just the name without the extension (eg <strong>HELLO</strong>).</p>
 <li><strong>EXAMPLE.BAS</strong> -- Demonstration of BASIC features (open it in EDIT.BIN to explore)</li>
 <li><strong>FILEMAN.BIN</strong> -- Delete, rename and copy files on the floppy disk</li>
 <li><strong>HANGMAN.BIN</strong> -- Guess the names of cities around the world</li>
+<li><strong>MEMEDIT.BAS</strong> -- Colourful, powerful memory editor</li>
+<li><strong>DRAW.BAS</strong> -- ASCII art drawing program</li>
+<li><strong>CALC.BAS</strong> -- Simple calculator</li>
+<li><strong>MUNCHER.BAS</strong> -- Snake-like game (use WASD keys)</li>
+<li><strong>ADVNTURE.BAS</strong> -- A text adventure</li>
 <li><strong>KEYBOARD.BIN</strong> -- Musical keyboard; use the bottom row of keys to play and Q to quit</li>
 <li><strong>MONITOR.BIN</strong> -- Simple machine code monitor (see below)</li>
 <li><strong>SERIAL.BIN</strong> -- Minicom-like serial terminal program (see below)</li>
-<li><strong>VIEWER.BIN</strong> -- Views text files and 320x200x16 PCX images such as <strong>TEST.PCX</strong></li>
+<li><strong>VIEWER.BIN</strong> -- Views text files and 320x200x16 PCX images such as <strong>SAMPLE.PCX</strong></li>
 </ul>
 
 <p>Note that <strong>FILEMAN.BIN</strong> and <strong>EDIT.BIN</strong> try to write to the floppy drive,
@@ -288,7 +294,7 @@ medium after burning.</p>
 <p>If you've written MikeOS to a real floppy disk, you can just copy extra files
 onto that disk in your file manager. But if you want to add files to the floppy disk images,
 that requires a bit of extra work -- you need to access the disk image as if it was a real
-floppy. First up is Linux switch to the the MikeOS main directory, then enter the following 
+floppy. First up is Linux: switch to the MikeOS main directory, then enter the following 
 commands as root:</p>
 
 <pre>

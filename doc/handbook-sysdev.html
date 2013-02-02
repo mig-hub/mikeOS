@@ -115,7 +115,7 @@ li {
 
 <h1>The MikeOS System Developer Handbook</h1>
 
-<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+<h3>For version 4.3, 24 February 2012 - (C) MikeOS Developers</h3>
 
 <p>This documentation file explains how to build MikeOS from the source code, make changes
 to the kernel, and add new system calls. If you have any questions, see
@@ -156,7 +156,7 @@ and memory.</p>
 <ul>
 <li><strong>source/</strong> -- Contains the entire OS source code</li>
 <li><strong>source/bootload/</strong> -- Source to generate BOOTLOAD.BIN, which is added to the disk image when building</li>
-<li><strong>source/features/</strong> -- Components of MikeOS such as FAT12 support, string routines etc.</li>
+<li><strong>source/features/</strong> -- Components of MikeOS such as FAT12 support, string routines, the BASIC interpreter etc.</li>
 <li><strong>source/kernel.asm</strong> -- The core kernel source file, which pulls in other source files</li>
 <li><strong>programs/</strong> -- Source code for programs added to the disk image</li>
 </ul>
@@ -236,7 +236,7 @@ starts, setting up various things and offering the user a choice of a program li
 <a name="buildlinux"></a>
 <h3>Linux</h3>
 
-<p><strong>Build requirements:</strong> the NASM assembler, 'mkisofs' utility and root access. We need root
+<p><strong>Build requirements:</strong> the NASM assembler, dosfstools package, 'mkisofs' utility and root access. We need root
 access because we loopback-mount the floppy disk image to insert our files.</p>
 
 <p>To build MikeOS, open a terminal and switch into the expanded MikeOS package. Enter <strong>sudo bash</strong>
@@ -250,7 +250,7 @@ in Ubuntu-flavoured distros, or just <strong>su</strong> in others, to switch to
 <strong>mikeos.flp</strong> floppy disk image in the <strong>disk_images/</strong> directory. (It writes the 512-byte
 bootloader to the first sector of the floppy disk image to create a boot sector and set up a DOS-like
 filesystem.) Next, the build script loopback-mounts the <strong>mikeos.flp</strong> image onto the filesystem - in other
-words, mounting the image as if it was a real floppy. The script copies over the kernel (<strong>mikekern.bin</strong>)
+words, mounting the image as if it was a real floppy. The script copies over the kernel (<strong>kernel.bin</strong>)
 and binaries from the <strong>programs/</strong> directory, before unmounting the floppy image.</p>
 
 <p>With that done, the script runs the 'mkisofs' utility to generate a CD-ROM ISO image of MikeOS, injecting
@@ -289,7 +289,7 @@ and unmount it with:</p>
 imdisk -d -m B:
 </pre>
 
-<p>Lastly, to test in the <a href="http://www1.interq.or.jp/~t-takeda/qemu/qemu-0.9.1-windows.zip">QEMU PC emulator</a>,
+<p>Lastly, to test in the <a href="http://www.h7.dion.ne.jp/~qemu-win/">QEMU PC emulator</a>,
 Extract QEMU to somewhere on your computer -- <strong>C:\</strong> is best. Then enter: the following to run MikeOS under QEMU:</p>
 
 <pre>
@@ -397,20 +397,20 @@ as the vector will never move!</p>
 from 0003h. Scroll to the bottom of the list and you'll see something like this:</p>
 
 <pre>
-	jmp os_run_basic		; 00C6h
+	jmp os_string_tokenize		; 00CFh
 </pre>
 
 <p>The comment here indicates where this bit of code lies in the kernel binary. Once again, it's static, and
-basically says: if your program wants to call <strong>os_run_basic</strong>, it should call 00C6h, as
+basically says: if your program wants to call <strong>os_string_tokenize</strong>, it should call 00CFh, as
 this jumps to the required routine and will never change position.</p>
 
 <p>Let's add a vector to our new call. Add this beneath the existing vectors:</p>
 
 <pre>
-	jmp os_say_hello		; 00C9h
+	jmp os_say_hello		; 00D2h
 </pre>
 
-<p>How do we know this <strong>jmp</strong> is at 00C9h in the kernel binary? Well, just follow the pattern in the 
+<p>How do we know this <strong>jmp</strong> is at 00D2h in the kernel binary? Well, just follow the pattern in the 
 <strong>jmp</strong>s above - it's pretty easy to guess. If you're unsure, you can always use 
 <strong>ndisasm</strong> to disassemble the kernel and look for the location of the final 
 <strong>jmp</strong> in the list.</p>
@@ -420,7 +420,7 @@ call an ugly number like 00C9h when they run our routine. They want to access it
 to add a line to <strong>mikedev.inc</strong> in the <strong>programs/</strong> directory:</p>
 
 <pre>
-os_say_hello	equ	00C9h	; Prints 'Hello' to screen
+os_say_hello	equ	00D2h	; Prints 'Hello' to screen
 </pre>
 
 <p>Now, any program that includes <strong>mikedev.inc</strong> will be able to call our routine by name.
@@ -441,12 +441,12 @@ goes in the source code, and if it's OK, we'll include it.</p>
 patch. On UNIX-like systems such as Linux, you can use the <strong>diff</strong> command-line utility to generate
 a list of your changes. For this, you will need the original (release) source code tree of MikeOS, along with the
 tree of your modified code. For instance, you may have the original code in a directory called
-<strong>mikeos-4.0/</strong> and your enhanced version in <strong>new-mikeos-4.0/</strong>.</p>
+<strong>mikeos-4.2/</strong> and your enhanced version in <strong>new-mikeos-4.0/</strong>.</p>
 
 <p>Switch to the directory beneath these, and enter:</p>
 
 <pre>
-diff -ru mikeos-4.0 new-mikeos-4.0 &gt; patch.txt
+diff -ru mikeos-4.2 new-mikeos-4.2 &gt; patch.txt
 </pre>
 
 <p>This collates the differences between the two directories, and directs the output to the file <strong>patch.txt</strong>.

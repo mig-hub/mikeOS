@@ -120,7 +120,7 @@ li {
 
 <h1>The MikeOS Assembly App Developer Handbook</h1>
 
-<h3>Version 4.1, 17 January 2010 - (C) MikeOS Developers</h3>
+<h3>For version 4.3, 24 February 2012 - (C) MikeOS Developers</h3>
 
 <p>This documentation file explains how write software for MikeOS in assembly language. It shows you the tools you need,
 how MikeOS programs work, and how to use the system calls included in the kernel. If you have
@@ -165,6 +165,9 @@ in the kernel. So, by including this file you can call, for instance, the MikeOS
 routine without having to know exactly where it is in the kernel. <strong>mikedev.inc</strong> is included in
 the <strong>programs/</strong> directory of the MikeOS download -- it also provides a quick reference to the
 system calls.</p>
+
+<p>If a MikeOS program is run from the command line, and one or more parameters was provided with the command,
+they are passed to the program via the SI register as a zero-terminated string.</p>
 
 
 <br />
@@ -580,7 +583,7 @@ within an assembly source file, so you can enhance the system calls as per the M
 <p><strong>Get a random integer between high and low values (inclusive)</strong></p>
 
 <ul>
- <li>IN: AX = low integer, BX = high
+ <li>IN: AX = low integer, BX = high</li>
  <li>OUT: CX = random number between AX and BX</li>
 </ul>
 
@@ -689,6 +692,23 @@ within an assembly source file, so you can enhance the system calls as per the M
 <br />
 
 
+
+
+<h3>os_serial_port_enable</h3>
+<p><strong>Turn on the first serial port</strong></p>
+
+<ul>
+ <li>IN: AX = 0 for normal mode (9600 baud), or 1 for slow mode (1200 baud)</li>
+ <li>OUT: AH = bit 7 clear on success</li>
+</ul>
+
+
+
+<br />
+
+
+
+
 <h3>os_send_via_serial</h3>
 <p><strong>Send a byte via the serial port</strong></p>
 
@@ -706,20 +726,6 @@ within an assembly source file, so you can enhance the system calls as per the M
 	jnz all_ok			; Otherwise it's all OK
 	jmp oops_error			; Deal with the error
 </pre>
-
-
-
-<br />
-
-
-
-<h3>os_serial_port_enable</h3>
-<p><strong>Turn on the first serial port</strong></p>
-
-<ul>
- <li>IN: AX = 0 for normal mode (9600 baud), or 1 for slow mode (1200 baud)</li>
- <li>OUT: AH = bit 7 clear on success</li>
-</ul>
 
 
 

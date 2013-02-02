@@ -1,6 +1,6 @@
 ; ==================================================================
 ; The Mike Operating System bootloader
-; Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; Based on a free boot loader by E Dehling. It scans the FAT12
 ; floppy for KERNEL.BIN (the MikeOS kernel), loads it and executes it.
@@ -58,8 +58,19 @@ bootloader_start:
 
 	; NOTE: A few early BIOSes are reported to improperly set DL
 
-	mov byte [bootdev], dl		; Save boot device number
+	cmp dl, 0
+	je no_change
+	mov [bootdev], dl		; Save boot device number
+	mov ah, 8			; Get drive parameters
+	int 13h
+	jc fatal_disk_error
+	and cx, 3Fh			; Maximum sector number
+	mov [SectorsPerTrack], cx	; Sector numbers start at 1
+	movzx dx, dh			; Maximum head number
+	add dx, 1			; Head numbers start at 0 - add 1 for total
+	mov [Sides], dx
 
+no_change:
 	mov eax, 0			; Needed for some older BIOSes
 
 
@@ -156,6 +167,9 @@ read_fat:
 	call reset_floppy		; Otherwise, reset floppy controller and try again
 	jnc read_fat			; Floppy reset OK?
 
+; ******************************************************************
+fatal_disk_error:
+; ******************************************************************
 	mov si, disk_error		; If not, print error message and reboot
 	call print_string
 	jmp reboot			; Fatal double error

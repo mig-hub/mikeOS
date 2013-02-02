@@ -99,7 +99,7 @@ main_loop:
 .done:
 	mov byte [di], 0		; Write terminating zero
 
-	mov si, run			; Copy machine code to second 16K of RAM
+	mov si, run			; Copy machine code to location for execution
 	mov di, CODELOC
 	mov cx, 255
 	cld

@@ -11,6 +11,31 @@
 start:
 	call setup_screen
 
+	cmp si, 0				; Were we passed a filename?
+	je .no_param_passed
+
+	call os_string_tokenize			; If so, get it from params
+
+	mov di, filename			; Save file for later usage
+	call os_string_copy
+
+
+	mov ax, si
+	mov cx, 36864
+	call os_load_file			; Load the file 4K after the program start point
+	jnc file_load_success
+
+	mov ax, file_load_fail_msg		; If fail, show message and exit
+	mov bx, 0
+	mov cx, 0
+	mov dx, 0
+	call os_dialog_box
+
+	call os_clear_screen
+	ret					; Back to the OS
+
+
+.no_param_passed:
 	call os_file_selector			; Get filename to load
 	jnc near file_chosen
 
@@ -61,6 +86,7 @@ valid_extension:
 	mov cx, 36864				; Load the file 4K after the program start point
 	call os_load_file
 
+file_load_success:
 	mov word [filesize], bx
 
 
@@ -388,6 +414,9 @@ text_entry:
 	cmp ax, 3C00h				; F2 pressed?
 	je near save_file
 
+	cmp ax, 3D00h				; F3 pressed?
+	je near new_file
+
 	cmp ax, 3F00h				; F5 pressed?
 	je near .f5_pressed
 
@@ -562,9 +591,14 @@ text_entry:
 
 
 .f8_pressed:				; Run BASIC
+	mov word ax, [filesize]
+	cmp ax, 4
+	jl .not_big_enough
+
 	call os_clear_screen
 
 	mov ax, 36864
+	mov si, 0
 	mov word bx, [filesize]
 
 	call os_run_basic
@@ -578,7 +612,20 @@ text_entry:
 	jmp render_text
 
 
+.not_big_enough:
+	mov ax, .fail1_msg
+	mov bx, .fail2_msg
+	mov cx, 0
+	mov dx, 0
+	call os_dialog_box
+
+	popa
+	jmp render_text
+
+
 	.basic_finished_msg	db ">>> BASIC finished - hit a key to return to the editor", 0
+	.fail1_msg		db 'Not enough BASIC code to execute!', 0
+	.fail2_msg		db 'You need at least an END command.', 0
 
 
 ; ------------------------------------------------------------------
@@ -647,7 +694,7 @@ save_file:
 
 	jc .failure				; If we couldn't save file...
 
-	mov ax, .succeed_msg
+	mov ax, file_save_succeed_msg
 	mov bx, 0
 	mov cx, 0
 	mov dx, 0
@@ -658,8 +705,8 @@ save_file:
 
 
 .failure:
-	mov ax, .fail_msg1
-	mov bx, .fail_msg2
+	mov ax, file_save_fail_msg1
+	mov bx, file_save_fail_msg2
 	mov cx, 0
 	mov dx, 0
 	call os_dialog_box
@@ -668,10 +715,67 @@ save_file:
 	jmp render_text
 
 
-	.fail_msg1	db "Could not save file!", 0
-	.fail_msg2	db "(Write-only media?)", 0
+; ------------------------------------------------------------------
+; NEW FILE
 
-	.succeed_msg	db "File saved.", 0
+new_file:
+	mov ax, confirm_msg
+	mov bx, 0
+	mov cx, 0
+	mov dx, 1
+	call os_dialog_box
+	cmp ax, 1
+	je .do_nothing
+
+	mov di, 36864			; Clear the entire text buffer
+	mov al, 0
+	mov cx, 28672
+	rep stosb
+
+	mov word [filesize], 1
+
+	mov bx, 36864			; Store just a single newline char
+	mov byte [bx], 10
+	inc bx
+	mov word [last_byte], bx
+
+	mov cx, 0			; Reset other values
+	mov word [skiplines], 0
+
+	mov byte [cursor_x], 0
+	mov byte [cursor_y], 2
+
+	mov word [cursor_byte], 0
+
+
+.retry_filename:
+	mov ax, filename
+	mov bx, new_file_msg
+	call os_input_dialog
+
+
+	mov ax, filename			; Delete the file if it already exists
+	call os_remove_file
+
+	mov ax, filename
+	mov word cx, [filesize]
+	mov bx, 36864
+	call os_write_file
+	jc .failure				; If we couldn't save file...
+
+.do_nothing:
+	popa
+	jmp render_text
+
+
+.failure:
+	mov ax, file_save_fail_msg1
+	mov bx, file_save_fail_msg2
+	mov cx, 0
+	mov dx, 0
+	call os_dialog_box
+
+	jmp .retry_filename
 
 
 ; ------------------------------------------------------------------
@@ -746,11 +850,18 @@ showbytepos:
 ; Data section
 
 	txt_title_msg	db 'MikeOS Text Editor', 0
-	txt_footer_msg	db '[Esc] Quit    [F1] Help    [F2] Save    [F5] Delete line    [F8] Run BASIC', 0
+	txt_footer_msg	db '[Esc] Quit  [F1] Help  [F2] Save  [F3] New  [F5] Delete line  [F8] Run BASIC', 0
 
 	txt_extension	db 'TXT', 0
 	bas_extension	db 'BAS', 0
 	wrong_ext_msg	db 'You can only load .TXT or .BAS files!', 0
+	confirm_msg	db 'Are you sure? Unsaved data will be lost!', 0
+
+	file_load_fail_msg	db 'Could not load file! Does it exist?', 0
+	new_file_msg		db 'Enter a new filename:', 0
+	file_save_fail_msg1	db 'Could not save file!', 0
+	file_save_fail_msg2	db '(Write-only media or bad filename?)', 0
+	file_save_succeed_msg	db 'File saved.', 0
 
 	skiplines	dw 0
 
@@ -761,8 +872,8 @@ showbytepos:
 
 	last_byte	dw 0			; Location in RAM of final byte in file
 
-	filename	times 12 db 0
-
+	filename	times 32 db 0		; 12 would do, but the user
+						; might enter something daft
 	filesize	dw 0
 
 

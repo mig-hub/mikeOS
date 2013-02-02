@@ -1,6 +1,6 @@
 ==================================================================
 MikeOS -- Open source 16-bit operating system for x86 PCs
-Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ==================================================================
 
 
@@ -13,7 +13,11 @@ DEVELOPMENT
 
  * E Dehling
  * Ian Seyler
+ * Joshua Beck
+ * Justin Tokarchuk
+ * Matej Horvat
  * Michael van Tellingen
+ * Mike Gonta
  * Peter Nemeth
  * Paulo Valongo
  * Takayoshi Sasano

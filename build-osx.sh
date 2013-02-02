@@ -19,13 +19,13 @@ fi
 
 echo ">>> Assembling bootloader..."
 
-nasm -f bin -o source/bootload/bootload.bin source/bootload/bootload.asm || exit
+nasm -O0 -f bin -o source/bootload/bootload.bin source/bootload/bootload.asm || exit
 
 
 echo ">>> Assembling MikeOS kernel..."
 
 cd source
-nasm -f bin -o kernel.bin kernel.asm || exit
+nasm -O0 -f bin -o kernel.bin kernel.asm || exit
 cd ..
 
 
@@ -35,7 +35,7 @@ cd programs
 
 for i in *.asm
 do
-	nasm -f bin $i -o `basename $i .asm`.bin || exit
+	nasm -O0 -f bin $i -o `basename $i .asm`.bin || exit
 done
 
 cd ..
@@ -56,7 +56,7 @@ rm -rf tmp-loop
 dev=`hdid -nobrowse -nomount disk_images/mikeos.dmg`
 mkdir tmp-loop && mount -t msdos ${dev} tmp-loop && cp source/kernel.bin tmp-loop/
 
-cp programs/*.bin programs/example.bas programs/test.pcx tmp-loop
+cp programs/*.bin programs/*.bas programs/sample.pcx tmp-loop
 
 echo ">>> Unmounting loopback floppy..."
 

@@ -1,11 +1,11 @@
 ; ------------------------------------------------------------------
-; Include file for MikeOS program development (API version 11)
+; Include file for MikeOS program development (API version 15)
 ; ------------------------------------------------------------------
 
 ; ------------------------------------------------------------------
 ; IMPORTANT LOCATIONS
 
-os_main			equ	0000h	; Jump here to completely restart OS
+os_main			equ	0000h	; Where the OS code starts
 
 
 ; ------------------------------------------------------------------
@@ -75,7 +75,8 @@ os_check_for_key	equ	0015h	; Returns AL = key pressed
 os_get_file_list	equ	0042h	; AX = string to store filenames
 os_load_file		equ	0021h	; IN: AX = filename string location,
 					; CX = location to load file
-					; OUT: BX = file size in bytes
+					; OUT: BX = file size in bytes,
+					; carry clear if OK, set if missing
 os_write_file		equ	0096h	; AX = filename, BX = data location,
 					; CX = number of bytes to save
 os_file_exists		equ	0099h	; AX = filename, carry clear if exists
@@ -110,7 +111,7 @@ os_string_strip		equ	004Bh	; SI = string, AX = char to remove
 os_string_truncate	equ	004Eh	; SI = string, AX = number of chars
 os_set_time_fmt		equ	0084h	; AL = format
 os_set_date_fmt		equ	0087h	; AX = format
-os_get_time_string	equ	0055h	; BX = string location for eg '20:41'
+os_get_time_string	equ	0054h	; BX = string location for eg '20:41'
 os_get_date_string	equ	005Dh	; BX = string loc for eg '12/31/2007'
 os_find_char_in_string	equ	0066h	; IN: SI = string, AL = char to find
 os_long_int_to_string	equ	007Eh	; DX:AX = num, BX = base, DI = string
@@ -118,6 +119,9 @@ os_string_to_int	equ	00B1h	; SI = string (up to 65535), AX = int
 os_string_charchange	equ	00BAh	; SI = string, AL = old char, BL = new
 os_string_parse		equ	00C3h	; SI = string; output: AX/BX/CX/DX =
 					; substrings (or 0 if not present)
+os_string_tokenize	equ	00CFh	; SI = string, AL = sep char; returns
+					; DI = next token
+
 
 ; Math routines
 
@@ -138,7 +142,8 @@ os_get_via_serial	equ	0063h	; Returns AL = byte received
 
 ; Misc OS functions
 
-os_run_basic		equ	00C6h	; AX = code loc, BX = size
+os_run_basic		equ	00C6h	; AX = code location in RAM, BX = size,
+					; SI = parameter string (or 0 if none)
 os_get_api_version	equ	0057h	; Returns API version in AL
 os_pause		equ	0024h	; AX = 10ths of second to wait
 os_fatal_error		equ	0027h	; AX = error string location

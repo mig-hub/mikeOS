@@ -271,7 +271,7 @@ start:
 	.help_msg2		db 'or press the Esc key to exit...', 0
 
 	.title_msg		db 'MikeOS File Manager', 0
-	.footer_msg		db 'For all your file management needs', 0
+	.footer_msg		db 'Copy, rename and delete files', 0
 
 	.label_string_text	db 'Filesystem label: ', 0
 	.label_string_full	times 30 db 0

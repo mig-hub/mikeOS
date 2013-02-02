@@ -3,7 +3,7 @@ MikeOS -- License
 ==================================================================
 
 
-Copyright (C) 2006 - 2010 MikeOS Developers -- http://mikeos.berlios.de
+Copyright (C) 2006 - 2012 MikeOS Developers -- http://mikeos.berlios.de
 
 All rights reserved.
 

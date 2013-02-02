@@ -2,23 +2,24 @@ rem *** MikeOS BASIC demo ***
 
 cls
 
-print "Which program do you want to run?"
-print ""
-print "1 - Hex dumper"
-print "2 - MikeTron"
-print ""
+$1 = "Hex dumper,MikeTron"
+$2 = "Choose a program to run,"
+$3 = "Or press Esc to exit"
 
-startloop:
-  waitkey x
-  if x = '1' then goto runhex
-  if x = '2' then goto runmiketron
-  goto startloop
+listbox $1 $2 $3 a
 
+if a = 1 then goto runhex
+if a = 2 then goto runmiketron
+
+cls
+end
 
 
 runhex:
 
 rem *** Hex dumper ***
+
+cls
 
 print "Enter a filename to make a hex dump from:"
 input $1

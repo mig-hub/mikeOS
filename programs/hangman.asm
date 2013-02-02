@@ -117,6 +117,12 @@ main_loop:
 	cmp al, KEY_ESC
 	je finish
 
+	cmp al, 122				; Work with just "a" to "z" keys
+	ja main_loop
+
+	cmp al, 97
+	jb main_loop
+
 	mov bl, al				; Store character temporarily
 
 	mov cx, 0				; Counter into string

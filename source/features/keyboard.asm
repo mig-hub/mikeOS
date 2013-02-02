@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2010 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; KEYBOARD HANDLING ROUTINES
 ; ==================================================================
@@ -50,7 +50,7 @@ os_check_for_key:
 
 .nokey:
 	popa
-	mov al, 0			; Zero result if no key pressed
+	mov ax, 0			; Zero result if no key pressed
 	ret
 
 
