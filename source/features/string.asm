@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; STRING MANIPULATION ROUTINES
 ; ==================================================================
@@ -549,7 +549,7 @@ os_int_to_string:
 .push:
 	mov dx, 0
 	div bx				; Remainder in DX, quotient in AX
-	inc cx                          ; Increase pop loop counter
+	inc cx				; Increase pop loop counter
 	push dx				; Push remainder, so as to reverse order when popping
 	test ax, ax			; Is quotient zero?
 	jnz .push			; If not, loop again
@@ -593,7 +593,7 @@ os_sint_to_string:
 .push:
 	mov dx, 0
 	div bx				; Remainder in DX, quotient in AX
-	inc cx                          ; Increase pop loop counter
+	inc cx				; Increase pop loop counter
 	push dx				; Push remainder, so as to reverse order when popping
 	test ax, ax			; Is quotient zero?
 	jnz .push			; If not, loop again

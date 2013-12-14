@@ -77,6 +77,7 @@ file_chosen:
 	mov cx, 0
 	call os_dialog_box
 
+	mov si, 0
 	jmp start
 
 

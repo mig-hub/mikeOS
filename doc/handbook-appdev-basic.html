@@ -89,7 +89,9 @@ li {
 <ul>
 <li><a href="#alert">ALERT</a></li>
 <li><a href="#askfile">ASKFILE</a></li>
+<li><a href="#break">BREAK</a></li>
 <li><a href="#call">CALL</a></li>
+<li><a href="#case">CASE</a></li>
 <li><a href="#cls">CLS</a></li>
 <li><a href="#cursor">CURSOR</a></li>
 <li><a href="#curschar">CURSCHAR</a></li>
@@ -97,7 +99,9 @@ li {
 <li><a href="#curspos">CURSPOS</a></li>
 <li><a href="#delete">DELETE</a></li>
 <li><a href="#do">DO</a></li>
+<li><a href="#else">ELSE</a></li>
 <li><a href="#end">END</a></li>
+<li><a href="#files">FILES</a></li>
 <li><a href="#for">FOR</a></li>
 <li><a href="#getkey">GETKEY</a></li>
 <li><a href="#gosub">GOSUB</a></li>
@@ -156,7 +160,7 @@ li {
 
 <h1>The MikeOS BASIC App Developer Handbook</h1>
 
-<h3>For version 4.3, 24 February 2012 - (C) MikeOS Developers</h3>
+<h3>For version 4.4, 23 March 2013 - (C) MikeOS Developers</h3>
 
 <p>This documentation file explains how to write software for MikeOS using the BASIC interpreter
 built into the operating system. If you have any questions, see <a href="http://mikeos.berlios.de">the MikeOS website</a>
@@ -346,6 +350,11 @@ x = RAMSTART
 <p>This is one byte on from the end of the BASIC code. Therefore this is empty memory which you can use, up until the 65536 mark.
 You can LOAD and SAVE files in here, PEEK and POKE around, and do what you want without it impacting the operating system or BASIC program.</p>
 
+<p>To retrieve the location in RAM where the MikeOS BASIC variables are stored, use this:</p>
+
+<pre>
+x = VARIABLES
+</pre>
 
 
 <br />
@@ -395,7 +404,7 @@ lines quickly, and <strong>Esc</strong> to exit (you'll see a reminder of these 
 bar of the editor).</p>
 
 <p>The MikeOS text editor only handles Unix-style text files, and curently does not support horizontal scrolling
-of lines, so keep them less than 80 chars! You can use the Delete and Backspace keys to erase characters,
+of lines, so keep them less than 80 characters! You can use the Delete and Backspace keys to erase characters,
 but note that only Delete can be used to remove newlines.</p>
 
 
@@ -438,17 +447,38 @@ askfile $1
 
 <br />
 
+<a name="break"></a>
+<h3>BREAK</h3>
+<p>Halts execution of the BASIC program and prints the line number in the BASIC file. Useful for debugging.</p>
+
+
+
+<br />
+
 <a name="call"></a>
 <h3>CALL</h3>
 <p>Moves machine code execution to the specified point in RAM (using the x86 <strong>call</strong> instruction). The code
 must be terminated with a <strong>ret</strong> (C3 hex, 195 decimal) instruction. In this example, we simply
 add a <strong>ret</strong> instruction into RAM location 40000 and call it, which returns control straight back to the BASIC
 interpreter:</p>
-<a name="theeditor"></a>
 
 <pre>
 poke 195 40000
 call 40000
+</pre>
+
+
+
+
+<br />
+
+<a name="case"></a>
+<h3>CASE</h3>
+<p>Changes the contents of a string to all upper-case or lower-case.</p>
+
+<pre>
+case lower $1
+case upper $2
 </pre>
 
 
@@ -568,13 +598,33 @@ loop until x = 10
 
 <br />
 
-<a name="end"></a>
-<h3>END</h3>
-<p>Terminates execution of the BASIC program and hands control back to the operating system. Example:</p>
+<a name="else"></a>
+<h3>ELSE</h3>
+<p>Executes code if the previous IF condition didn't match. Example:</p>
 
 <pre>
-end
+x = 1
+if x = 1 then print "Hello"
+else print "Goodbye"
 </pre>
+
+
+
+
+<br />
+
+<a name="end"></a>
+<h3>END</h3>
+<p>Terminates execution of the BASIC program and hands control back to the operating system.</p>
+
+
+
+
+<br />
+
+<a name="files"></a>
+<h3>FILES</h3>
+<p>Prints a list of files that are on the disk on the screen.</p>
 
 
 
@@ -759,7 +809,7 @@ len $1 x
 <a name="listbox"></a>
 <h3>LISTBOX</h3>
 <p>Displays an dialog box containing a list of options, specified by a comma-separated list in the first string. The second
-and third strings provide help text, and the chosen option (from 1) is stored in the specified variable (or if the Esc
+and third strings provide help text, and the chosen option (from 1) is stored in the specified variable (or zero if the Esc
 key is pressed). Example:</p>
 
 <pre>

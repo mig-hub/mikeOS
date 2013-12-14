@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; MISCELLANEOUS ROUTINES
 ; ==================================================================
@@ -44,7 +44,7 @@ os_pause:
 
 	cmp [.prev_tick_count], dx	; Compare with previous tick count
 
-	jne .up_date			; If it's changed check it    		
+	jne .up_date			; If it's changed check it
 	jmp .checkloop			; Otherwise wait some more
 
 .time_up:

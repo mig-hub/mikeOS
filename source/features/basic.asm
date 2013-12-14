@@ -1,8 +1,8 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
 ;
-; BASIC CODE INTERPRETER
+; BASIC CODE INTERPRETER (4.4)
 ; ==================================================================
 
 ; ------------------------------------------------------------------
@@ -79,6 +79,14 @@ mainloop:
 	call os_string_compare
 	jc near do_askfile
 
+	mov di, break_cmd
+	call os_string_compare
+	jc near do_break
+
+	mov di, case_cmd
+	call os_string_compare
+	jc near do_case
+
 	mov di, call_cmd
 	call os_string_compare
 	jc near do_call
@@ -115,6 +123,14 @@ mainloop:
 	call os_string_compare
 	jc near do_end
 
+	mov di, else_cmd
+	call os_string_compare
+	jc near do_else
+
+	mov di, files_cmd
+	call os_string_compare
+	jc near do_files
+
 	mov di, for_cmd
 	call os_string_compare
 	jc near do_for
@@ -146,7 +162,7 @@ mainloop:
 	mov di, input_cmd
 	call os_string_compare
 	jc near do_input
-
+	
 	mov di, len_cmd
 	call os_string_compare
 	jc near do_len
@@ -260,7 +276,7 @@ mainloop:
 
 clear_ram:
 	pusha
-	mov ax, 0
+	mov al, 0
 
 	mov di, variables
 	mov cx, 52
@@ -276,7 +292,7 @@ clear_ram:
 	
 	mov di, do_loop_store
 	mov cx, 10
-	rep stosw
+	rep stosb
 
 	mov byte [gosub_depth], 0
 	mov byte [loop_in], 0
@@ -314,7 +330,7 @@ assign:
 	cmp al, '='
 	jne near .error
 
-	call get_token
+	call get_token				; See if second is quote
 	cmp ax, QUOTE
 	je .second_is_quote
 
@@ -329,7 +345,7 @@ assign:
 	pop di
 	call os_string_copy
 
-	jmp mainloop
+	jmp .string_check_for_more
 
 
 .second_is_quote:
@@ -337,7 +353,78 @@ assign:
 	pop di
 	call os_string_copy
 
-	jmp mainloop
+
+.string_check_for_more:
+	push di
+	mov word ax, [prog]			; Save code location in case there's no delimiter
+	mov word [.tmp_loc], ax
+
+	call get_token				; Any more to deal with in this assignment?
+	mov byte al, [token]
+	cmp al, '+'
+	je .string_theres_more
+
+	mov word ax, [.tmp_loc]			; Not a delimiter, so step back before the token
+	mov word [prog], ax			; that we just grabbed
+
+	pop di
+	jmp mainloop				; And go back to the code interpreter!
+
+
+.string_theres_more:
+	call get_token
+	cmp ax, STRING_VAR
+	je .another_string_var
+	cmp ax, QUOTE
+	je .another_quote
+	cmp ax, VARIABLE
+	je .add_number_var
+	jmp .error
+
+
+.another_string_var:
+	pop di
+
+	mov si, string_vars
+	mov ax, 128
+	mul bx					; (BX = string number, passed back from get_token)
+	add si, ax
+
+	mov ax, di
+	mov cx, di
+	mov bx, si
+	call os_string_join
+
+	jmp .string_check_for_more
+
+
+
+.another_quote:
+	pop di
+
+	mov ax, di
+	mov cx, di
+	mov bx, token
+	call os_string_join
+
+	jmp .string_check_for_more
+
+
+.add_number_var:
+	mov ax, 0
+	mov byte al, [token]
+	call get_var
+	call os_int_to_string
+
+	mov bx, ax
+	pop di
+	mov ax, di
+	mov cx, di
+	call os_string_join
+
+	jmp .string_check_for_more
+	
+
 
 
 .do_num_var:
@@ -571,6 +658,10 @@ assign:
 	call os_string_compare
 	je .is_timer
 	
+	mov si, variables_keyword
+	call os_string_compare
+	je .is_variables
+	
 	mov si, version_keyword
 	call os_string_compare
 	je .is_version
@@ -617,6 +708,15 @@ assign:
 	int 1Ah
 	mov bx, dx
 
+	mov ax, 0
+	mov byte al, [.tmp]
+	call set_var
+
+	jmp mainloop
+
+
+.is_variables:
+	mov bx, vars_loc
 	mov ax, 0
 	mov byte al, [.tmp]
 	call set_var
@@ -711,8 +811,8 @@ do_askfile:
 	
 	call os_file_selector			; Present the selector
 	
-	mov word si, [.tmp]			; Copy the string
-	mov di, ax
+	mov word di, [.tmp]			; Copy the string
+	mov si, ax
 	call os_string_copy
 
 	mov bh, [work_page]			; Move the cursor back
@@ -727,6 +827,15 @@ do_askfile:
 
 .data:
 	.tmp					dw 0
+
+
+; ------------------------------------------------------------------
+; BREAK
+
+do_break:
+	mov si, err_break
+	jmp error
+
 
 ; ------------------------------------------------------------------
 ; CALL
@@ -756,6 +865,58 @@ do_call:
 
 	jmp mainloop
 
+
+; ------------------------------------------------------------------
+; CASE
+
+do_case:
+	call get_token
+	cmp ax, STRING
+	jne .error
+	
+	mov si, token
+
+	mov di, upper_keyword
+	call os_string_compare
+	jc .uppercase
+	
+	mov di, lower_keyword
+	call os_string_compare
+	jc .lowercase
+	
+	jmp .error
+	
+.uppercase:
+	call get_token
+	cmp ax, STRING_VAR
+	jne .error
+	
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add ax, si
+	
+	call os_string_uppercase
+	
+	jmp mainloop
+	
+.lowercase:
+	call get_token
+	cmp ax, STRING_VAR
+	jne .error
+	
+	mov si, string_vars
+	mov ax, 128
+	mul bx
+	add ax, si
+	
+	call os_string_lowercase
+	
+	jmp mainloop
+	
+.error:
+	mov si, err_syntax
+	jmp error
 
 
 ; ------------------------------------------------------------------
@@ -966,14 +1127,12 @@ do_delete:
 ; DO
 
 do_do:
-	cmp byte [loop_in], 10
+	cmp byte [loop_in], 20
 	je .loop_max
 	mov word di, do_loop_store
 	mov byte al, [loop_in]
 	mov ah, 0
 	add di, ax
-	mov si, di
-	lodsw
 	mov word ax, [prog]
 	sub ax, 3
 	stosw
@@ -986,6 +1145,30 @@ do_do:
 	jmp error
 
 	
+;-------------------------------------------------------------------
+; ELSE
+
+do_else:
+	cmp byte [last_if_true], 1
+	je .last_true
+	
+	inc word [prog]
+	jmp mainloop
+	
+.last_true:
+	mov word si, [prog]
+	
+.next_line:
+	lodsb
+	cmp al, 10
+	jne .next_line
+	
+	dec si
+	mov word [prog], si
+	
+	jmp mainloop
+
+
 ; ------------------------------------------------------------------
 ; END
 
@@ -999,6 +1182,78 @@ do_end:
 
 	mov word sp, [orig_stack]
 	ret
+
+
+; ------------------------------------------------------------------
+; FILES
+
+do_files:
+	mov ax, .filelist			; get a copy of the filelist
+	call os_get_file_list
+	
+	mov si, ax
+
+	call os_get_cursor_pos			; move cursor to start of line
+	mov dl, 0
+	call os_move_cursor
+	
+	mov ah, 9				; print character function
+	mov bh, [work_page]			; define parameters (page, colour, times)
+	mov bl, [ink_colour]
+	mov cx, 1
+.file_list_loop:
+	lodsb					; get a byte from the list
+	cmp al, ','				; a comma means the next file, so create a new line for it
+	je .nextfile
+	
+	cmp al, 0				; the list is null terminated
+	je .end_of_list
+	
+	int 10h					; okay, it's not a comma or a null so print it
+
+	call os_get_cursor_pos			; find the location of the cursor
+	inc dl					; move the cursor forward
+	call os_move_cursor
+
+	jmp .file_list_loop			; keep going until the list is finished
+	
+.nextfile:
+	call os_get_cursor_pos			; if the column is over 60 we need a new line
+	cmp dl, 60
+	jge .newline
+
+.next_column:					; print spaces until the next column
+	mov al, ' '
+	int 10h
+	
+	inc dl
+	call os_move_cursor
+	
+	cmp dl, 15
+	je .file_list_loop
+	
+	cmp dl, 30
+	je .file_list_loop
+	
+	cmp dl, 45
+	je .file_list_loop
+	
+	cmp dl, 60
+	je .file_list_loop
+	
+	jmp .next_column
+	
+.newline:
+	call os_print_newline			; create a new line
+	jmp .file_list_loop
+	
+.end_of_list:
+	call os_print_newline
+	jmp mainloop				; preform next command
+	
+.data:
+	.filelist		times 256	db 0
+	
 
 
 ; ------------------------------------------------------------------
@@ -1519,6 +1774,7 @@ do_if:
 	jmp error
 
 .then_present:				; Continue rest of line like any other command!
+	mov byte [last_if_true], 1
 	jmp mainloop
 
 
@@ -1529,6 +1785,7 @@ do_if:
 	cmp al, 10
 	jne .finish_line
 
+	mov byte [last_if_true], 0
 	jmp mainloop
 
 
@@ -3501,6 +3758,7 @@ do_string:
 	.tmp			db 0
 
 
+
 ; ------------------------------------------------------------------
 ; WAITKEY
 
@@ -3814,6 +4072,37 @@ error:
 
 	call os_print_newline
 	call os_print_string		; Print error message
+
+
+	mov si, line_num_starter
+	call os_print_string
+
+
+	; And now print the line number where the error occurred. We do this
+	; by working from the start of the program to the current point,
+	; counting the number of newline characters along the way
+
+	mov word si, [load_point]
+	mov word bx, [prog]
+	mov cx, 1
+
+.loop:
+	lodsb
+	cmp al, 10
+	jne .not_newline
+	inc cx
+.not_newline:
+	cmp si, bx
+	je .finish
+	jmp .loop
+.finish:
+
+	mov ax, cx
+	call os_int_to_string
+	mov si, ax
+	call os_print_string
+
+
 	call os_print_newline
 
 	mov word sp, [orig_stack]	; Restore the stack to as it was when BASIC started
@@ -3838,6 +4127,9 @@ error:
 	err_return		db "Error: RETURN without GOSUB", 0
 	err_string_range	db "Error: string location out of range", 0
 	err_syntax		db "Error: syntax error", 0
+	err_break		db "BREAK CALLED", 0
+
+	line_num_starter	db " - line ", 0
 
 
 ; ==================================================================
@@ -3853,6 +4145,7 @@ error:
 	token_type		db 0		; Type of last token read (eg NUMBER, VARIABLE)
 	token			times 255 db 0	; Storage space for the token
 
+vars_loc:
 	variables		times 26 dw 0	; Storage space for variables A to Z
 
 	for_variables		times 26 dw 0	; Storage for FOR loops
@@ -3861,13 +4154,17 @@ error:
 	do_loop_store		times 10 dw 0	; Storage for DO loops
 	loop_in			db 0		; Loop level
 
+	last_if_true		db 1		; Checking for 'ELSE'
+
 	ink_colour		db 0		; Text printing colour
 	work_page		db 0		; Page to print to
 	disp_page		db 0		; Page to display
 
 	alert_cmd		db "ALERT", 0
 	askfile_cmd		db "ASKFILE", 0
+	break_cmd		db "BREAK", 0
 	call_cmd		db "CALL", 0
+	case_cmd		db "CASE", 0
 	cls_cmd			db "CLS", 0
 	cursor_cmd		db "CURSOR", 0
 	curschar_cmd		db "CURSCHAR", 0
@@ -3875,7 +4172,9 @@ error:
 	curspos_cmd		db "CURSPOS", 0
 	delete_cmd		db "DELETE", 0
 	do_cmd			db "DO", 0
+	else_cmd		db "ELSE", 0
 	end_cmd			db "END", 0
+	files_cmd		db "FILES", 0
 	for_cmd 		db "FOR", 0
 	gosub_cmd		db "GOSUB", 0
 	goto_cmd		db "GOTO", 0
@@ -3915,11 +4214,15 @@ error:
 	then_keyword		db "THEN", 0
 	chr_keyword		db "CHR", 0
 	hex_keyword		db "HEX", 0
+	
+	lower_keyword		db "LOWER", 0
+	upper_keyword		db "UPPER", 0
 
 	ink_keyword		db "INK", 0
 	progstart_keyword	db "PROGSTART", 0
 	ramstart_keyword	db "RAMSTART", 0
 	timer_keyword		db "TIMER", 0
+	variables_keyword	db "VARIABLES", 0
 	version_keyword		db "VERSION", 0
 
 	gosub_depth		db 0

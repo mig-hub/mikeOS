@@ -1,17 +1,18 @@
 REM >>>MIKEBASIC-PLUS-PLUS-LIBRARY<<<
 REM Created by Joshua Beck.
-REM Version 3.0.2
+REM Version 3.2.1
 REM Released under the GNU General Public Licence revision 3.
 REM Requires MikeOS version 4.3 or greater.
 
 REM Send bug reports or feedback to mikeosdeveloper@gmail.com
 REM See the wiki at: http://mikebasicplusplus.wikispot.org/
 
-PRINT "This is a library and not for direct use!"
+PRINT "MB++ Library version 3.2.1"
 END
 
 ANCITEXT:
   GOSUB SAVEVAR
+  GOSUB SAVELOC
   ink c
   W = X
   POKE Y 65430
@@ -26,129 +27,84 @@ ANCITEXT:
     IF Y > 23 THEN J = 0
     move x y
     IF J > 0 THEN PEEK J V
-    IF J = 0 THEN J = 0
+    IF J = 0 THEN W = J + 1
     IF J < 20 THEN GOSUB ANCITXTS
-    IF J > 1 THEN PRINT CHR J
-    IF J > 1 THEN X = X + 1
+    IF J > 0 THEN PRINT CHR J
+    x = x + 1
     v = v + 1
-  LOOP UNTIL J = 0
+  LOOP UNTIL W > J
+  GOSUB LOADLOC
   GOSUB LOADVAR
 RETURN
   
 ANCITXTS:
   IF J = 0 THEN RETURN
+  IF J = 1 THEN V = V + 1
+  IF J = 1 THEN J = 255
   IF J = 7 THEN J = 255
   IF J = 10 THEN Y = Y + 1
   IF J = 10 THEN PEEK X 65431
-  IF J = 10 THEN J = 1
+  IF J = 10 THEN V = V + 1
+  IF J = 10 THEN GOTO ANCITEX2
+RETURN
+  
+ANICLOSE:
+  FOR W = 1 TO 4
+    READ ANICLOSC W J
+    GOSUB BLOCKBOX
+    PAUSE 1
+  NEXT W
+RETURN
+  
+ANICLOSC:
+  176 177 178 219
+
+ANIEND:  
+  GOSUB SAVEVAR
+  FOR W = 1 TO 8
+    READ ANIENDCH W J
+    GOSUB BLOCKSCR
+    PAUSE 1
+    IF W = 4 THEN PAUSE 4
+  NEXT W
+  GOSUB LOADVAR
 RETURN
 
-aniclose:
-  if $Y = "DISABLE" then return
-  j = 176
-  gosub blockbox
-  pause 1
-  j = 177
-  gosub blockbox
-  pause 1
-  j = 178
-  gosub blockbox
-  pause 1
-  j = 219
-  gosub blockbox
-  pause 1
-  return
+ANIENDCH:
+  176 177 178 219 178 177 176 0
 
-aniend:
-  IF $Z = "NOINT" THEN RETURN
-  if $Y = "DISABLE" then return
-  j = 176
-  gosub blockscr
-  pause 1
-  j = 177
-  gosub blockscr
-  pause 1
-  j = 178
-  gosub blockscr
-  pause 1
-  j = 219
-  gosub blockscr
-  pause 5
-  j = 178
-  gosub blockscr
-  pause 1
-  j = 177
-  gosub blockscr
-  pause 1
-  j = 176
-  gosub blockscr
-  pause 1
-  j = 0
-  gosub blockscr
-  pause 1
-return
+ANIOPEN:
+  GOSUB SAVEVAR
+  FOR W = 1 TO 4
+    READ ANIOPENCH W J
+    GOSUB BLOCKBOX
+    PAUSE 1
+  NEXT W
+  GOSUB LOADVAR
+RETURN
 
-aniopen:
-  if $Y = "DISABLE" then return
-  j = 219
-  gosub blockbox
-  pause 1
-  j = 178
-  gosub blockbox
-  pause 1
-  j = 177 
-  gosub blockbox
-  pause 1
-  j = 176
-  gosub blockbox
-  pause 1
-  return
-
-anistart:
-  if $Y = "DISABLE" then return
-  j = 176
-  gosub blockscr
-  pause 1
-  j = 177
-  gosub blockscr
-  pause 1
-  j = 178
-  gosub blockscr
-  pause 1
-  j = 219
-  gosub blockscr
-  pause 1
-  j = 178
-  gosub blockscr
-  j = 219
-  gosub blockbor
-  pause 2
-  j = 177
-  gosub blockscr
-  j = 219
-  gosub blockbor
-  pause 2
-  j = 176
-  gosub blockscr
-  j = 219
-  gosub blockbor
-  pause 2
-  j = 0
-  gosub blockscr
-  move 2 1
-  print $T
-  j = 219
-  gosub blockbor
-  pause 2
-  j = 178
-  gosub blockbor
-  pause 1
-  j = 177
-  gosub blockbor
-  pause 1
-  j = 176
-  gosub blockbor
-  return
+ANIOPENCH:
+  219 178 177 176
+  
+ANISTART:
+  GOSUB SAVEVAR
+  FOR W = 1 TO 11
+    IF W < 9 THEN READ ANISTARC W J
+    IF W < 9 THEN GOSUB BLOCKSCR
+    V = W - 4
+    IF W > 4 THEN READ ANISTARB V J
+    IF W > 4 THEN GOSUB BLOCKBOR
+    PAUSE 1
+    IF W > 4 AND W < 9 THEN PAUSE 1
+    IF W = 8 THEN GOSUB TITLE
+  NEXT W
+  GOSUB LOADVAR
+RETURN
+  
+ANISTARC:
+  176 177 178 219 178 177 176 0
+ANISTARB:
+  219 219 219 219 178 177 176
 
 ARRAYGET:
   POKEINT J 65418
@@ -405,11 +361,32 @@ RETURN
 CONTENT:
 RETURN
 
+cserial:
+  gosub savevar
+  v = 0
+  serial rec x
+  if x = 4 then v = 1
+  if x = 5 then v = 2
+  if v > 0 then goto cserialc
+  serial send 5
+  serial rec x
+  if x > 31 then x = 5
+  if x = 6 then x = 3
+  if x = 0 then v = 6
+  if v > 0 then goto cserialc
+  v = 4
+  cserialc:
+  poke v 65418
+  gosub loadvar
+  peek v 65418
+return
+
 DINBOX:
   $E = "INPBOX: Invalid input type."
   IF V > 1 THEN GOTO ERRBOX
   IF V < 0 THEN GOTO ERRBOX
   GOSUB OPENBOX
+  if $5 = "" then goto dinboxnf
   move 22 11
   print $5
   move 22 12
@@ -418,6 +395,8 @@ DINBOX:
   cursor on
   if v = 0 then input a
   if v = 1 then input $7
+  dinboxnf:
+  if $6 = "" then goto dinboxns
   move 22 13
   print $6
   move 22 14
@@ -425,6 +404,7 @@ DINBOX:
   move 23 14
   if v = 0 then input b
   if v = 1 then input $8
+  dinboxns:
   GOSUB CLOSEBOX
 return
 
@@ -523,16 +503,17 @@ MENUBOX:
   V = 11
   GOSUB MENUDRAW
   MENULOOP:
+  DO
     WAITKEY W
-    IF W = 1 AND V = 11 THEN GOTO MENULOOP
-    IF W = 2 AND V = 15 THEN GOTO MENULOOP
+    IF W = 1 AND V = 11 THEN LOOP ENDLESS
+    IF W = 2 AND V = 15 THEN LOOP ENDLESS
     IF W = 1 THEN V = V - 1
     IF W = 2 THEN V = V + 1
     IF W < 3 THEN GOSUB MENUDRAW
     IF W = 13 THEN GOTO MENUEND
-    IF W = 27 THEN $I = ""
-    IF W = 27 THEN RETURN
-  GOTO MENULOOP
+    IF W = 27 THEN V = 16
+    IF W = 27 THEN GOTO MENUEND
+  LOOP ENDLESS 
   MENUDRAW:
     J = W
     W = V
@@ -561,6 +542,7 @@ MENUBOX:
     PRINT "Press enter to select an option."
   RETURN
   MENUITEM:
+    $J = ""
     IF W = 11 THEN $J = $5
     IF W = 12 THEN $J = $6
     IF W = 13 THEN $J = $7
@@ -568,9 +550,9 @@ MENUBOX:
     IF W = 15 THEN $J = $9
   RETURN
   MENUEND:
+    LOOP UNTIL V = V
     W = V
     GOSUB MENUITEM
-    IF $J = "" THEN GOTO MENULOOP
     $I = $J
     V = V - 10
   GOSUB CLOSEBOX
@@ -617,22 +599,21 @@ return
 OPENBOX:
   IF $T = "Error" THEN GOTO ERRNOVERIFY
   POKEINT V 65418
-  LEN $5 V
-  IF V > 38 THEN $E = "String $5 too long"
-  IF V > 38 THEN GOTO ERRBOX
-  LEN $6 V
-  IF V > 38 THEN $E = "String $6 too long"
-  IF V > 38 THEN GOTO ERRBOX
-  LEN $7 V
-  IF V > 38 THEN $E = "String $7 too long"
-  IF V > 38 THEN GOTO ERRBOX
-  LEN $8 V
-  IF V > 38 THEN $E = "String $8 too long"
-  IF V > 38 THEN GOTO ERRBOX
-  LEN $9 V
-  IF V > 38 THEN $E = "String $9 too long"
-  IF V > 38 THEN GOTO ERRBOX
-  PEEKINT V 65418
+  GOSUB SAVEVAR
+  FOR X = 1 TO 5
+    IF X = 1 THEN LEN $5 V
+    IF X = 2 THEN LEN $6 V
+    IF X = 3 THEN LEN $7 V
+    IF X = 4 THEN LEN $8 V
+    IF X = 5 THEN LEN $9 V
+    IF V > 37 AND X = 1 THEN $E = "String $5 too long!"
+    IF V > 37 AND X = 2 THEN $E = "String $6 too long!"
+    IF V > 37 AND X = 3 THEN $E = "String $7 too long!"
+    IF V > 37 AND X = 4 THEN $E = "String $8 too long!"
+    IF V > 37 AND X = 5 THEN $E = "String $9 too long!"
+    IF V > 37 THEN GOTO ERRBOX
+  NEXT X
+  GOSUB LOADVAR
   ERRNOVERIFY:
   GOSUB SAVEVAR
   GOSUB SAVELOC
@@ -677,8 +658,36 @@ REFRESH:
   cls
   gosub border
   gosub title
-  gosub content
   GOSUB LOADVAR
+  gosub content
+return
+
+rserial:
+  gosub savevar
+  do
+    serial rec w
+    if w = 5 then serial send 6
+  loop until w = 4
+  serial send 6
+  do
+    serial rec w
+    if w > 32 then w = 0
+  loop until w > 0
+  if w = 20 then goto rserialc
+  gosub loadvar
+  $E = "Serial: Invalid protocol!"
+  goto errbox
+  rserialc:
+  serial rec w
+  poke w 65418
+  v = w + x
+  v = v - 1
+  for w = x to v
+    serial rec j
+    poke j w
+  next w
+  gosub loadvar
+  peek v 65418
 return
 
 SAVELOC:
@@ -748,6 +757,26 @@ SETTITLE:
   GOSUB LOADVAR
 RETURN
 
+sserial:
+  if v > 255 then $E = "Serial: Packet size too big!"
+  if v > 255 then goto errbox
+  gosub savevar
+  do
+    serial send 4
+    serial rec w
+    if w > 32 then w = 0
+  loop until w = 6
+  serial send 20
+  serial send v
+  v = v + x
+  v = v - 1
+  for w = x to v
+    peek j w
+    serial send j
+  next w
+  gosub loadvar
+return
+
 STARTPRG:
   FOR X = 64000 TO 65535
     POKE 0 X
@@ -759,7 +788,9 @@ STARTPRG:
   C = 7
   H = 14
   T = 7
+  Z = 7
   INK 7
+  $9 = ""
   GOSUB LOADVAR
 RETURN
 

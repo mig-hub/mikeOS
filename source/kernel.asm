@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; This is loaded from the drive by BOOTLOAD.BIN, as KERNEL.BIN.
 ; First we have the system call vectors, which start at a static point
@@ -11,8 +11,8 @@
 
 	BITS 16
 
-	%DEFINE MIKEOS_VER '4.3.1'	; OS version number
-	%DEFINE MIKEOS_API_VER 15	; API version for programs to check
+	%DEFINE MIKEOS_VER '4.4'	; OS version number
+	%DEFINE MIKEOS_API_VER 16	; API version for programs to check
 
 
 	; This is the location in RAM for kernel disk operations, 24K

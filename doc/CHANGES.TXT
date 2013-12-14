@@ -1,7 +1,40 @@
 ==================================================================
 MikeOS -- Open source 16-bit operating system for x86 PCs
-Copyright (C) 2006 - 2012 MikeOS Developers -- see doc/LICENSE.TXT
+Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
 ==================================================================
+
+
+4.4 (23 March 2013)
+-------------------
+
+# New game: MikeOS Sudoku (SUDOKU.BAS), a puzzle game
+
+# New game: Cosmic Flight (CF.BAS) from Joshua
+
+# BASIC: string additions now possible with literal strings, other string
+  variables, or numeric variables, eg: $1 = $2 + "foo" + x + "bar"
+
+# BASIC: Use "x = VARIABLES" to determine where BASIC stores its numeric
+  variables
+
+# BASIC: New BREAK command to halt execution and show line number
+
+# BASIC: Now displays line numbers with error messages
+
+# BASIC: New CASE command from Joshua (changes case of a string)
+
+# BASIC: New ELSE keyword from Joshua (used with IF)
+
+# BASIC: New FILES command from Joshua (shows file listing from disk)
+
+# Updated MikeBASIC Plus Plus (MBPP.BAS) to version 3.2.1
+
+# Updated Calculator (CALC.BAS) to 2.0.0
+
+# Bump API to version 16
+
+# Handbook fixes
+
 
 
 4.3.1 (28 April 2012)

@@ -120,7 +120,7 @@ li {
 
 <h1>The MikeOS Assembly App Developer Handbook</h1>
 
-<h3>For version 4.3, 24 February 2012 - (C) MikeOS Developers</h3>
+<h3>For version 4.4, 23 March 2013 - (C) MikeOS Developers</h3>
 
 <p>This documentation file explains how write software for MikeOS in assembly language. It shows you the tools you need,
 how MikeOS programs work, and how to use the system calls included in the kernel. If you have
@@ -332,7 +332,7 @@ within an assembly source file, so you can enhance the system calls as per the M
 <p><strong>Load file into RAM</strong></p>
 
 <ul>
- <li>IN: AX = location of filename, CX = location in RAM to load file</li>
+ <li>IN: AX = location of zero-terminated filename string, CX = location in RAM to load file</li>
  <li>OUT: BX = file size (in bytes), carry set if file not found</li>
 </ul>
 
@@ -345,7 +345,7 @@ within an assembly source file, so you can enhance the system calls as per the M
 
 	...
 
-	filename db 'README.TXT'
+	filename db 'README.TXT', 0
 </pre>
 
 <br />
