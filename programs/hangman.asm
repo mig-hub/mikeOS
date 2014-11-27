@@ -560,7 +560,7 @@ db 'algiers', 0
 db 'andorra la vella', 0
 db 'luanda', 0
 db 'saint johns', 0
-db 'bueno saires', 0
+db 'buenos aires', 0
 db 'yerevan', 0
 db 'canberra', 0
 db 'adelaide', 0
@@ -704,7 +704,7 @@ db 'lisbon', 0
 db 'doha', 0
 db 'bucharest', 0
 db 'moscow', 0
-db 'kigalo', 0
+db 'kigali', 0
 db 'basseterre', 0
 db 'castries', 0
 db 'kingstown', 0

@@ -11,7 +11,7 @@
 
 	BITS 16
 
-	%DEFINE MIKEOS_VER '4.4'	; OS version number
+	%DEFINE MIKEOS_VER '4.5b1'	; OS version number
 	%DEFINE MIKEOS_API_VER 16	; API version for programs to check
 
 

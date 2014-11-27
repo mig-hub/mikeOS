@@ -925,13 +925,13 @@ do_case:
 do_cls:
 	mov ah, 5
 	mov byte al, [work_page]
-	int 10
+	int 10h
 
 	call os_clear_screen
 
 	mov ah, 5
 	mov byte al, [disp_page]
-	int 10
+	int 10h
 
 	jmp mainloop
 

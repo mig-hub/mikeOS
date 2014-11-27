@@ -1040,8 +1040,8 @@ all_ok:
 
 <pre>
 	mov ax, .string1
-	mov bx, .string1
-	mov cx, .string1
+	mov bx, .string2
+	mov cx, .string3
 	mov dx, 1
 	call os_dialog_box
 
@@ -1372,6 +1372,7 @@ Char_Found:
 	mov ax, .string1
 	mov bx, .string2
 	mov cx, .string3
+	call os_string_join
 
 	; CX now points to 'HELLOYOU', 0
 
