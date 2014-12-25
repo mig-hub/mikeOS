@@ -37,5 +37,5 @@ See the doc/ directory for more info, including:
 
 Have fun, and see the [website](http://mikeos.sourceforge.net)
 
-> (Mike Saunders)[mailto:okachi@gmail.com]
+(Mike Saunders)[mailto:okachi@gmail.com]
 
