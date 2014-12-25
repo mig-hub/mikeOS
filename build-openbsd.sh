@@ -21,7 +21,7 @@ if [ ! -e disk_images/mikeos.flp ]
 then
 	echo ">>> Creating new MikeOS floppy image..."
 	dd if=/dev/zero of=disk_images/mikeos.flp bs=512 count=2880 || exit
-	vnconfig svnd3 disk_images/mikeos.flp && newfs_msdos -f 1440 svnd3c && vnconfig -u svnd3 || exit
+	vnconfig vnd3 disk_images/mikeos.flp && newfs_msdos -f 1440 vnd3c && vnconfig -u vnd3 || exit
 fi
 
 
@@ -57,9 +57,9 @@ dd conv=notrunc if=source/bootload/bootload.bin of=disk_images/mikeos.flp || exi
 echo ">>> Copying MikeOS kernel and programs..."
 
 rm -rf tmp-loop
-vnconfig svnd3 disk_images/mikeos.flp || exit
+vnconfig vnd3 disk_images/mikeos.flp || exit
 
-mkdir tmp-loop && mount -t msdos /dev/svnd3c tmp-loop && cp source/kernel.bin tmp-loop/
+mkdir tmp-loop && mount -t msdos /dev/vnd3c tmp-loop && cp source/kernel.bin tmp-loop/
 
 cp programs/*.bin programs/*.bas programs/sample.pcx tmp-loop
 
@@ -67,14 +67,14 @@ echo ">>> Unmounting loopback floppy..."
 
 umount tmp-loop || exit
 
-vnconfig -u svnd3 || exit
+vnconfig -u vnd3 || exit
 rm -rf tmp-loop
 
 
 echo ">>> Creating CD-ROM ISO image..."
 
 rm -f disk_images/mikeos.iso
-mkisofs -quiet -V 'MIKEOS' -input-charset iso8859-1 -o disk_images/mikeos.iso -b mikeos.flp disk_images/ || exit
+mkisofs -quiet -V 'MIKEOS' -r -J -o disk_images/mikeos.iso -b mikeos.flp disk_images/ || exit
 
 echo '>>> Done!'
 

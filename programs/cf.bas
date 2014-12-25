@@ -1,6 +1,6 @@
 rem Cosmic Flight (CF.BAS)
 rem Created by Joshua Beck
-rem Version 2.0
+rem Version 2.0.2
 rem Released under the GNU General Public Licence v3
 rem mail: mikeosdeveloper@gmail.com
 goto start
@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 start:
+  cls
+
   rem ***Cool Intro Text***
   gosub intro  
 
@@ -71,7 +73,8 @@ play:
       if k = ' ' then gosub fireweapon
 
       rem ***loop until we need to scroll***
-    loop until n = t
+      n = n + 1
+    loop until n > t
 
     rem ***get the next starting time***
     t = timer
@@ -556,6 +559,7 @@ printscore:
 return
 
 intro:
+  cls
   x = 25
   y = 1
   cursor off

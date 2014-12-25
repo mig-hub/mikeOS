@@ -1,13 +1,13 @@
 REM >>>MIKEBASIC-PLUS-PLUS-LIBRARY<<<
-REM Created by Joshua Beck.
-REM Version 3.2.1
-REM Released under the GNU General Public Licence revision 3.
+REM Library Version 3.2.3
+REM Copyright (C) Joshua Beck.
+REM Email: mikeosdeveloper@gmail.com
+REM Licenced under the GNU General Public Licence revision 3.
 REM Requires MikeOS version 4.3 or greater.
 
-REM Send bug reports or feedback to mikeosdeveloper@gmail.com
 REM See the wiki at: http://mikebasicplusplus.wikispot.org/
 
-PRINT "MB++ Library version 3.2.1"
+PRINT "MB++ Library version 3.2.3"
 END
 
 ANCITEXT:
@@ -120,7 +120,7 @@ ARRAYGET:
 RETURN
 
 ARRAYPUT:
-  POKEINT 65418
+  POKEINT J 65418
   IF X > 99 THEN $E = "ARRAYGET: Array over maximum"
   IF X > 99 THEN GOTO ERRBOX
   IF X < 0 THEN $E = "ARRAYGET: Number below zero"
@@ -238,7 +238,6 @@ RETURN
 BORDER:
   GOSUB SAVEVAR
   GOSUB SAVELOC
-  POKE Z 65439
   INK Z
   J = 1
   Y = 0
@@ -409,7 +408,6 @@ DINBOX:
 return
 
 ENDPROG:
-  z = 7
   gosub aniend
   cls
   cursor on
@@ -735,7 +733,7 @@ SETTITLE:
   LEN $T J
   IF J = 0 THEN RETURN
   IF J > 78 THEN RETURN
-  PEEK Z 65439
+  POKE Z 65439
   INK Z
   MOVE 1 1
   PRINT " " ;

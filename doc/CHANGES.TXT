@@ -1,7 +1,49 @@
 ==================================================================
 MikeOS -- Open source 16-bit operating system for x86 PCs
-Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
+Copyright (C) 2006 - 2014 MikeOS Developers -- see doc/LICENSE.TXT
 ==================================================================
+
+
+4.5 (21 December 2014)
+----------------------
+
+# New program: Forth interpreter (FORTH.BIN) from Walt Nagel;
+  source code is programs/forth.asm
+
+# New program: Mega Archiver (ARCHIVE.BAS) from Joshua Beck
+
+# New game: FISHER.BIN from Jasper Ziller
+
+# Updated MikeBASIC Plus Plus (MBPP.BAS) to version 3.2.3
+
+# Updated Memory Manipulator (MEMEDIT.BAS) to 3.1.1
+
+# Updated Calculator (CALC.BAS) to version 2.0.1
+
+# Updated Cosmic Flight (CF.BAS) to 2.0.2
+
+# Updated ASCII Artist (DRAW.BAS) to 3.0.1
+
+# Updated KEYBOARD.BIN with accidentals (from Robert Looney)
+
+# Updated build-openbsd.sh (from Takayoshi Sasano)
+
+# Updated build-osx.sh (from Caleb Xu)
+
+# Fix: always show cursor when returning from BASIC in EDIT.BIN
+
+# source/features/basic.asm: do_cls: change "int 10" to "int 10h"
+
+# Changed "kigalo" to "kigali" in HANGMAN.BAS
+
+# Changed "bueno saires" to "buenos aires" in HANGMAN.BAS
+
+# Changed "qemu" to "qemu-system-i386" in test-linux.sh
+
+# Updated URL for Windows QEMU in doc/handbook-sysdev.html
+
+# Handbook fixes
+
 
 
 4.4 (23 March 2013)

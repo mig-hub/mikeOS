@@ -1,8 +1,8 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2014 MikeOS Developers -- see doc/LICENSE.TXT
 ;
-; BASIC CODE INTERPRETER (4.4)
+; BASIC CODE INTERPRETER (4.5)
 ; ==================================================================
 
 ; ------------------------------------------------------------------
@@ -925,13 +925,13 @@ do_case:
 do_cls:
 	mov ah, 5
 	mov byte al, [work_page]
-	int 10
+	int 10h
 
 	call os_clear_screen
 
 	mov ah, 5
 	mov byte al, [disp_page]
-	int 10
+	int 10h
 
 	jmp mainloop
 

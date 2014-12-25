@@ -608,6 +608,7 @@ text_entry:
 	mov si, .basic_finished_msg
 	call os_print_string
 	call os_wait_for_key
+	call os_show_cursor
 
 	popa
 	jmp render_text

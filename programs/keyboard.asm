@@ -231,7 +231,33 @@ start:
 	mov al, ','
 	int 10h
 
-
+	; Now the accidentals...
+	
+	mov dh, 11
+	mov dl, 27
+	call os_move_cursor
+	mov al, 'S'
+	int 10h
+	
+	add dl, 4
+	call os_move_cursor
+	mov al, 'D'
+	int 10h
+	
+	add dl, 8
+	call os_move_cursor
+	mov al, 'G'
+	int 10h
+	
+	add dl, 4
+	call os_move_cursor
+	mov al, 'H'
+	int 10h
+	
+	add dl, 4
+	call os_move_cursor
+	mov al, 'J'
+	int 10h
 
 	; Phew! We've drawn all the keys now
 
@@ -240,20 +266,32 @@ start:
 
 .nokey:				; Matching keys with notes
 	cmp al, 'z'
-	jne .x
+	jne .s
 	mov ax, 4000
 	mov bx, 0
 	call os_speaker_tone
 	jmp .retry
-
+.s:
+	cmp al, 's'
+	jne .x
+	mov ax, 3800
+	mov bx, 0
+	call os_speaker_tone
+	jmp .retry
 .x:
 	cmp al, 'x'
-	jne .c
+	jne .d
 	mov ax, 3600
 	mov bx, 0
 	call os_speaker_tone
 	jmp .retry
-
+.d:
+	cmp al, 'd'
+	jne .c
+	mov ax, 3400
+	mov bx, 0
+	call os_speaker_tone
+	jmp .retry
 .c:
 	cmp al, 'c'
 	jne .v
@@ -265,28 +303,46 @@ start:
 
 .v:
 	cmp al, 'v'
-	jne .b
+	jne .g
 	mov ax, 3000
 	mov bx, 0
 	call os_speaker_tone
 	jmp .retry
-
+.g:
+	cmp al, 'g'
+	jne .b
+	mov ax, 2850
+	mov bx, 0
+	call os_speaker_tone
+	jmp .retry
 .b:
 	cmp al, 'b'
-	jne .n
+	jne .h
 	mov ax, 2700
 	mov bx, 0
 	call os_speaker_tone
 	jmp .retry
-
+.h:
+	cmp al, 'h'
+	jne .n
+	mov ax, 2550
+	mov bx, 0
+	call os_speaker_tone
+	jmp .retry
 .n:
 	cmp al, 'n'
-	jne .m
+	jne .j
 	mov ax, 2400
 	mov bx, 0
 	call os_speaker_tone
 	jmp .retry
-
+.j:
+	cmp al, 'j'
+	jne .m
+	mov ax, 2250
+	mov bx, 0
+	call os_speaker_tone
+	jmp .retry
 .m:
 	cmp al, 'm'
 	jne .comma
@@ -305,14 +361,12 @@ start:
 
 .space:
 	cmp al, ' '
-	jne .q
+	jne .esc
 	call os_speaker_off
 	jmp .retry
 
-.q:
-	cmp al, 'q'
-	je .end
-	cmp al, 'Q'
+.esc:
+	cmp al, 27
 	je .end
 	jmp .nowt
 
@@ -330,7 +384,7 @@ start:
 
 
 	mus_kbd_title_msg	db 'MikeOS Music Keyboard (PC speaker sound)', 0
-	mus_kbd_footer_msg	db 'Hit keys to play notes, space to silence a note, and Q to quit', 0
+	mus_kbd_footer_msg	db 'Hit keys to play notes, space to silence a note, and Esc to quit', 0
 
 
 ; ------------------------------------------------------------------

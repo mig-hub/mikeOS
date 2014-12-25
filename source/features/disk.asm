@@ -1,6 +1,6 @@
 ; ==================================================================
 ; MikeOS -- The Mike Operating System kernel
-; Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
+; Copyright (C) 2006 - 2014 MikeOS Developers -- see doc/LICENSE.TXT
 ;
 ; FAT12 FLOPPY DISK ROUTINES
 ; ==================================================================

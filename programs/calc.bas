@@ -1,6 +1,6 @@
 rem Calculator Application (CALC.BAS)
 rem A simple calculator application.
-rem Version 2.0.0
+rem Version 2.0.1
 rem Made by Joshua Beck
 rem Released under the GNU General Public Licence version 3
 rem Send any bugs, ideas or comments to mikeosdeveloper@gmail.com
@@ -14,8 +14,8 @@ START:
   REM MB++ initialise function
   GOSUB STARTPRG
   REM set the text colour and highlight (for the menu)
-  C = 1
-  H = 9
+  C = 3
+  H = 11
   REM set the box colour
   T = 2
   MOVE 30 13
@@ -253,7 +253,7 @@ RETURN
 
 ABOUT:
   $T = "About"
-  $5 = "Calculator, version 2.0.0"
+  $5 = "Calculator, version 2.0.1"
   $6 = "An advanced calculator application"
   $7 = "Released under the GNU GPL v3"
   $8 = "Written in MikeOS BASIC"
