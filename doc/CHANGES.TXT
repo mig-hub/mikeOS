@@ -1,11 +1,11 @@
 ==================================================================
 MikeOS -- Open source 16-bit operating system for x86 PCs
-Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
+Copyright (C) 2006 - 2014 MikeOS Developers -- see doc/LICENSE.TXT
 ==================================================================
 
 
-4.5 beta 1 (8 May 2014)
------------------------
+4.5 (21 December 2014)
+----------------------
 
 # New program: Forth interpreter (FORTH.BIN) from Walt Nagel;
   source code is programs/forth.asm

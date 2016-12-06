@@ -1,6 +1,6 @@
 ==================================================================
 MikeOS -- Open source 16-bit operating system for x86 PCs
-Copyright (C) 2006 - 2013 MikeOS Developers -- see doc/LICENSE.TXT
+Copyright (C) 2006 - 2014 MikeOS Developers -- see doc/LICENSE.TXT
 ==================================================================
 
 

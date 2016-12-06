@@ -14,7 +14,7 @@ main:
 goto help
 
 collect_parameter:
-  rem >>> Collects a parameter seperated by a space to $2 <<<
+  rem >>> Collects a parameter separated by a space to $2 <<<
   rem >>> Offset(P) updated each time <<<
   x = & $1
   x = x + p
@@ -33,7 +33,7 @@ collect_parameter:
 return
 
 collect_list_item:
-  rem >>> Collect an item from a comma seperated list $2 to $3 <<<
+  rem >>> Collect an item from a comma separated list $2 to $3 <<<
   rem >>> offset in Q, returns null if list finished <<<
   if q = 255 then $3 = ""
   if q = 255 then return
@@ -329,7 +329,7 @@ help:
   print "Email: mikeosdeveloper@gmail.com"
   print "Licenced under the GNU General Public Licence v3"
   print ""
-  print "Syntax: ARCHIVE (command) (archive filename) [comma seperated list]"
+  print "Syntax: ARCHIVE (command) (archive filename) [comma separated list]"
   print ""
   print "Commands:"
   print "    Create - Create an empty archive"
