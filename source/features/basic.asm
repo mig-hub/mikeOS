@@ -3651,8 +3651,9 @@ do_sound:
 
 ;-------------------------------------------------------------------
 ; STRING
+
 do_string:
-	call get_token			; The first parameter is the word 'GET' or 'SET'
+	call get_token			; The first parameter is the word 'GET', 'SET', LOAD or SAVE
 	mov si, token
 	
 	mov di, .get_cmd
@@ -3663,13 +3664,31 @@ do_string:
 	call os_string_compare
 	jc .get_str
 	
+	mov di, .load_cmd
+	call os_string_compare
+	jc .load_str
+	
+	mov di, .save_cmd
+	call os_string_compare
+	jc .save_str
+
 	jmp .error
 	
 	.set_str:
 	mov cx, 1
 	jmp .check_second
+
 	.get_str:
 	mov cx, 2
+	jmp .check_second
+	
+	.load_str:
+	mov cx, 3
+	jmp .check_second
+	
+	.save_str:
+	mov cx, 4
+	jmp .check_second
 
 .check_second:
 	call get_token			; The next should be a string variable, locate it
@@ -3713,6 +3732,12 @@ do_string:
 	sub ax, 1
 	mov dx, ax
 	
+	cmp cx, 3			; load/save only need two variables
+	je .load_var
+	
+	cmp cx, 4
+	je .save_var
+	
 .check_forth:
 	call get_token			; Next a numerical variable
 	
@@ -3724,7 +3749,7 @@ do_string:
 	
 	cmp cx, 2
 	je .set_var
-	
+		
 .get_var:
 	mov word si, [.string_loc]	; Move to string location
 	add si, dx			; Add offset
@@ -3743,17 +3768,42 @@ do_string:
 	stosb				; Store data
 	jmp mainloop
 	
+.load_var:
+	inc dx
+	mov si, dx
+	mov di, [.string_loc]
+	call os_string_copy
+	jmp mainloop
+	
+.save_var:
+	inc dx
+	mov si, [.string_loc]
+	mov di, dx
+	call os_string_copy
+	jmp mainloop
+	
 .error:
 	mov si, err_syntax
 	jmp error
 	
 .outrange:
+	mov dx, ax
+	dec dx
+
+	cmp cx, 3
+	je .load_var
+	
+	cmp cx, 4
+	je .save_var
+
 	mov si, err_string_range
 	jmp error
 
 .data:
 	.get_cmd		db "GET", 0
 	.set_cmd		db "SET", 0
+	.load_cmd		db "LOAD", 0
+	.save_cmd		db "STORE", 0
 	.string_loc		dw 0
 	.tmp			db 0
 
